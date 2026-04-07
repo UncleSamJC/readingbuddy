@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { readFileSync } from "node:fs";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
@@ -10,7 +11,20 @@ import { assessRoutes } from "./routes/assess.js";
 import { bookRoutes } from "./routes/books.js";
 import { userRoutes } from "./routes/user.js";
 
-const app = Fastify({ logger: true });
+// HTTPS support: load SSL certs if paths are provided
+const sslCert = process.env.SSL_CERT_PATH;
+const sslKey = process.env.SSL_KEY_PATH;
+const httpsOptions =
+  sslCert && sslKey
+    ? {
+        https: {
+          cert: readFileSync(sslCert),
+          key: readFileSync(sslKey),
+        },
+      }
+    : {};
+
+const app = Fastify({ logger: true, ...httpsOptions });
 
 async function start() {
   await app.register(cors, {
