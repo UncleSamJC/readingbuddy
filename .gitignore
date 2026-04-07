@@ -1,0 +1,14 @@
+node_modules/
+.next/
+dist/
+.turbo/
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+package-lock.json
+
+# Sensitive files
+docs/supabase_info.txt
+docs/more_keys_info.txt
+apps/api/.env
