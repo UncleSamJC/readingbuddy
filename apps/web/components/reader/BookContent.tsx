@@ -50,19 +50,34 @@ function MarkableParagraph({
   text,
   markedWordsSet,
   onWordClick,
+  activeSentenceRef,
+  ttsSentenceIndex,
+  isActiveParagraph,
 }: {
   text: string;
   markedWordsSet: Set<string>;
   onWordClick: (word: string, sentence: string) => void;
+  activeSentenceRef: React.RefObject<HTMLSpanElement | null>;
+  ttsSentenceIndex?: number | null;
+  isActiveParagraph: boolean;
 }) {
   const sentences = splitSentences(text);
+  const showTts = isActiveParagraph && ttsSentenceIndex != null;
 
   return (
     <p className="rounded-lg px-3 py-2 text-base leading-loose sm:text-lg">
       {sentences.map((sentence, si) => {
+        const isCurrentTts = showTts && si === ttsSentenceIndex;
         const words = sentence.split(/(\s+)/);
         return (
-          <span key={si}>
+          <span
+            key={si}
+            ref={isCurrentTts ? activeSentenceRef : undefined}
+            className={cn(
+              "transition-colors",
+              isCurrentTts && "underline decoration-primary decoration-2 underline-offset-4"
+            )}
+          >
             {words.map((token, wi) => {
               const clean = cleanWord(token);
               if (!clean) return <span key={wi}>{token}</span>;
@@ -107,19 +122,30 @@ export function BookContent({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const activeSentenceRef = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
+  function scrollToActiveSentence() {
     const container = scrollContainerRef.current;
     const el = activeSentenceRef.current;
-    if (ttsSentenceIndex == null || !container || !el) return;
+    if (!container || !el) return;
 
     const containerRect = container.getBoundingClientRect();
     const elRect = el.getBoundingClientRect();
-
-    // Position of element top relative to the scrollable content (not viewport)
     const elAbsoluteTop = elRect.top - containerRect.top + container.scrollTop;
     const targetScroll = elAbsoluteTop - container.clientHeight / 2 + elRect.height / 2;
     container.scrollTo({ top: Math.max(0, targetScroll), behavior: "smooth" });
+  }
+
+  // Scroll when TTS sentence changes
+  useEffect(() => {
+    if (ttsSentenceIndex == null) return;
+    scrollToActiveSentence();
   }, [ttsSentenceIndex]);
+
+  // Scroll when marking mode is turned on while TTS is playing
+  useEffect(() => {
+    if (!isMarkingMode || ttsSentenceIndex == null) return;
+    // Wait one frame so MarkableParagraph has rendered with the ref
+    requestAnimationFrame(() => scrollToActiveSentence());
+  }, [isMarkingMode]);
 
   const handleSentenceClick = useCallback(
     (sentence: string, paraIndex: number) => {
@@ -149,7 +175,7 @@ export function BookContent({
             return <ReadingParagraph key={i} matches={wordMatches} />;
           }
 
-          // Marking mode — each word clickable
+          // Marking mode — each word clickable, TTS sentence underlined
           if (isMarkingMode && markedWordsSet && onWordMark) {
             return (
               <MarkableParagraph
@@ -157,6 +183,9 @@ export function BookContent({
                 text={text}
                 markedWordsSet={markedWordsSet}
                 onWordClick={onWordMark}
+                activeSentenceRef={activeSentenceRef}
+                ttsSentenceIndex={ttsSentenceIndex}
+                isActiveParagraph={isActive}
               />
             );
           }
