@@ -6,7 +6,7 @@ import { useAppStore } from "@/lib/store";
 import { useSpeech } from "@/lib/use-speech";
 import { streamChat, fetchTtsAudio } from "@/lib/api";
 import { diffWords, type WordMatch } from "@/lib/text-diff";
-import { BookContent, splitSentences } from "@/components/reader/BookContent";
+import { BookContent, splitSentences, type BookContentHandle } from "@/components/reader/BookContent";
 import { ActionButtons, type TtsState } from "@/components/reader/ActionButtons";
 import { ChapterSelector } from "@/components/reader/ChapterSelector";
 import { ChatPanel } from "@/components/chat/ChatPanel";
@@ -31,6 +31,7 @@ export default function ReadPage({
   const router = useRouter();
   const cancelStreamRef = useRef<(() => void) | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const bookContentRef = useRef<BookContentHandle>(null);
 
   // Store
   const chapters = useAppStore((s) => s.chapters);
@@ -181,19 +182,34 @@ export default function ReadPage({
   // ── TTS (sentence-by-sentence with pre-fetching) ──
 
   const handleListenDemo = useCallback(async () => {
-    const text = paragraphs[activeParagraph];
-    if (!text || ttsState !== "idle") return;
+    if (ttsState !== "idle") return;
+
+    // Start from first visible sentence in the card
+    const startPos = bookContentRef.current?.getFirstVisiblePosition() ?? {
+      paragraphIndex: activeParagraph,
+      sentenceIndex: 0,
+    };
+
+    const text = paragraphs[startPos.paragraphIndex];
+    if (!text) return;
+
+    // Switch active paragraph if needed
+    if (startPos.paragraphIndex !== activeParagraph) {
+      setActiveParagraph(startPos.paragraphIndex);
+    }
 
     const sentences = splitSentences(text);
     if (sentences.length === 0) return;
 
+    const startIdx = Math.min(startPos.sentenceIndex, sentences.length - 1);
+
     ttsAbortRef.current = false;
     setTtsState("playing");
 
-    // Pre-fetch first sentence immediately
-    let nextAudioPromise: Promise<string> | null = fetchTtsAudio(sentences[0].trim(), ttsVoice, ttsSpeed);
+    // Pre-fetch starting sentence immediately
+    let nextAudioPromise: Promise<string> | null = fetchTtsAudio(sentences[startIdx].trim(), ttsVoice, ttsSpeed);
 
-    for (let i = 0; i < sentences.length; i++) {
+    for (let i = startIdx; i < sentences.length; i++) {
       if (ttsAbortRef.current) break;
 
       setTtsSentenceIndex(i);
@@ -366,6 +382,7 @@ export default function ReadPage({
 
       {/* Book content */}
       <BookContent
+        ref={bookContentRef}
         paragraphs={paragraphs}
         activeParagraphIndex={activeParagraph}
         onParagraphClick={setActiveParagraph}
