@@ -112,11 +112,12 @@ export function BookContent({
     const el = activeSentenceRef.current;
     if (ttsSentenceIndex == null || !container || !el) return;
 
-    const elTop = el.offsetTop;
-    const elHeight = el.offsetHeight;
-    const containerHeight = container.clientHeight;
-    // Scroll so the active sentence is roughly centered
-    const targetScroll = elTop - containerHeight / 2 + elHeight / 2;
+    const containerRect = container.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+
+    // Position of element top relative to the scrollable content (not viewport)
+    const elAbsoluteTop = elRect.top - containerRect.top + container.scrollTop;
+    const targetScroll = elAbsoluteTop - container.clientHeight / 2 + elRect.height / 2;
     container.scrollTo({ top: Math.max(0, targetScroll), behavior: "smooth" });
   }, [ttsSentenceIndex]);
 
