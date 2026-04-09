@@ -139,7 +139,7 @@ export function BookContent({
 
   return (
     <Card className="overflow-hidden">
-      <CardContent ref={scrollContainerRef} className="max-h-[300px] space-y-1 overflow-y-auto px-3 py-4 sm:max-h-[400px] sm:px-6 sm:py-5">
+      <CardContent ref={scrollContainerRef} className="max-h-[280px] space-y-1 overflow-y-auto px-3 py-0 sm:max-h-[380px] sm:px-6">
         {paragraphs.map((text, i) => {
           const isActive = i === activeParagraphIndex;
 

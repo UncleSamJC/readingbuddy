@@ -55,7 +55,9 @@ export function ChapterSelector({
     <div className="relative flex items-center gap-1">
       {/* Prev arrow */}
       <button
-        onClick={() => apiRef.current?.scrollPrev()}
+        onClick={() => {
+          if (canGoPrev) onSelect(chapters[activeIndex - 1].id);
+        }}
         disabled={!canGoPrev}
         className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-30"
         aria-label="Previous chapter"
@@ -100,7 +102,9 @@ export function ChapterSelector({
 
       {/* Next arrow */}
       <button
-        onClick={() => apiRef.current?.scrollNext()}
+        onClick={() => {
+          if (canGoNext) onSelect(chapters[activeIndex + 1].id);
+        }}
         disabled={!canGoNext}
         className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-30"
         aria-label="Next chapter"
