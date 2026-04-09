@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Chapter } from "@readbuddy/shared-types";
 import {
   Carousel,
@@ -48,6 +48,12 @@ export function ChapterSelector({
 
   const canGoPrev = activeIndex > 0;
   const canGoNext = activeIndex < chapters.length - 1;
+  const [pulsing, setPulsing] = useState<"prev" | "next" | null>(null);
+
+  function pulse(dir: "prev" | "next") {
+    setPulsing(dir);
+    setTimeout(() => setPulsing(null), 300);
+  }
 
   if (chapters.length <= 1) return null;
 
@@ -56,13 +62,19 @@ export function ChapterSelector({
       {/* Prev arrow */}
       <button
         onClick={() => {
-          if (canGoPrev) onSelect(chapters[activeIndex - 1].id);
+          if (canGoPrev) { pulse("prev"); onSelect(chapters[activeIndex - 1].id); }
         }}
         disabled={!canGoPrev}
-        className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-30"
+        className="shrink-0 p-1 disabled:opacity-30"
         aria-label="Previous chapter"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft
+          className={`h-4 w-4 transition-all duration-300 ${
+            pulsing === "prev"
+              ? "scale-125 text-orange-600"
+              : "text-muted-foreground"
+          }`}
+        />
       </button>
 
       {/* Carousel */}
@@ -103,13 +115,19 @@ export function ChapterSelector({
       {/* Next arrow */}
       <button
         onClick={() => {
-          if (canGoNext) onSelect(chapters[activeIndex + 1].id);
+          if (canGoNext) { pulse("next"); onSelect(chapters[activeIndex + 1].id); }
         }}
         disabled={!canGoNext}
-        className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-30"
+        className="shrink-0 p-1 disabled:opacity-30"
         aria-label="Next chapter"
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight
+          className={`h-4 w-4 transition-all duration-300 ${
+            pulsing === "next"
+              ? "scale-125 text-orange-600"
+              : "text-muted-foreground"
+          }`}
+        />
       </button>
     </div>
   );

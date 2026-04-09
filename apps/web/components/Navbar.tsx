@@ -19,7 +19,7 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-sm">
       <div className="mx-auto flex h-12 max-w-4xl items-center justify-between px-3 sm:h-14 sm:px-4">
-        <Link href="/" className="text-lg font-bold text-primary sm:text-xl">
+        <Link href="/" className="flex items-center text-lg font-bold text-primary sm:text-xl">
           ReadingBuddy
         </Link>
         <div className="flex items-center gap-0.5 sm:gap-1">
