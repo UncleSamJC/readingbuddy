@@ -327,11 +327,8 @@ export default function ReadPage({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-bold">{currentBook?.title ?? "My Book"}</h1>
-          <p className="text-sm text-muted-foreground">{chapter.title}</p>
-        </div>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="truncate text-xl font-bold">{currentBook?.title ?? "My Book"}</h1>
         <Button
           variant={isMarkingMode ? "default" : "secondary"}
           size="sm"
@@ -345,14 +342,12 @@ export default function ReadPage({
         </Button>
       </div>
 
-      {/* Chapter tabs */}
-      {chapters.length > 1 && (
-        <ChapterSelector
-          chapters={chapters}
-          activeChapterId={chapter.id}
-          onSelect={handleChapterSwitch}
-        />
-      )}
+      {/* Chapter selector — shows title + allows switching */}
+      <ChapterSelector
+        chapters={chapters}
+        activeChapterId={chapter.id}
+        onSelect={handleChapterSwitch}
+      />
 
       {/* Recording indicator */}
       {isRecording && (

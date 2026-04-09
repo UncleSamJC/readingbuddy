@@ -239,7 +239,8 @@ export const useAppStore = create<AppState>()(
         if (!bookId) {
           try {
             const bookTitle = state.currentBook?.title || "My Book";
-            const book = await api.createBook(bookTitle);
+            const bookAuthor = state.currentBook?.author;
+            const book = await api.createBook(bookTitle, bookAuthor);
             bookId = book.id;
             set({
               currentBook: {

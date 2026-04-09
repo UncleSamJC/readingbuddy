@@ -34,7 +34,7 @@ export function Navbar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors hover:bg-secondary sm:px-3",
+                  "flex items-center justify-center gap-1.5 rounded-lg p-2 text-sm font-medium transition-colors hover:bg-secondary sm:px-3 sm:py-2 sm:justify-start",
                   isActive
                     ? "bg-secondary text-primary"
                     : "text-muted-foreground"
@@ -47,7 +47,7 @@ export function Navbar() {
           })}
           <button
             onClick={() => signOut()}
-            className="ml-1 flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary sm:px-3"
+            className="ml-1 flex items-center justify-center rounded-lg p-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary sm:px-3 sm:py-2"
             title="Sign out"
           >
             <LogOut className="h-4 w-4" />

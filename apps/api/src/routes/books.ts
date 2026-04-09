@@ -6,8 +6,22 @@ const MAX_WORDS_PER_CHAPTER = 3000;
 
 function cleanText(text: string): string {
   return text
+    // Normalize line endings
     .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    // Remove soft hyphens (PDF line-break artifacts: "some-\nword" → "someword")
+    .replace(/\u00ad/g, "")
+    // Replace non-breaking spaces and other Unicode whitespace with regular space
+    .replace(/[\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]/g, " ")
+    // Remove zero-width characters
+    .replace(/[\u200b\u200c\u200d\ufeff]/g, "")
+    // Join hyphenated line breaks: "some-\nword" → "someword"
+    .replace(/(\w)-\n(\w)/g, "$1$2")
+    // Single newline between text (PDF soft wrap) → space
+    .replace(/([^\n])\n([^\n])/g, "$1 $2")
+    // Normalize spaces/tabs
     .replace(/[ \t]+/g, " ")
+    // Collapse excessive blank lines
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }

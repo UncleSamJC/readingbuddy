@@ -52,6 +52,9 @@ export default function HomePage() {
       {/* Book header */}
       <div>
         <h1 className="text-2xl font-bold">{currentBook?.title ?? "My Book"}</h1>
+        {currentBook?.author && (
+          <p className="text-sm text-muted-foreground">by {currentBook.author}</p>
+        )}
         <p className="text-sm text-muted-foreground">
           {chapters.length} chapter{chapters.length > 1 ? "s" : ""} &middot;{" "}
           {totalWords.toLocaleString()} words &middot;{" "}

@@ -35,7 +35,7 @@ supabase/migrations/   — 数据库 schema (5张表: books, chapters, paragraph
 - 前端全部完成 (1.1-1.8): 书本录入、阅读界面、AI对话(SSE流式)、TTS逐句播放+句子高亮、语音朗读+逐词对比、词汇标记+练习(闪卡/填空/朗读)、设置页(音色/语速)、响应式适配
 - 后端完成: Fastify启动、Supabase连接+migration、Books API (CRUD)、Chat API (Claude SSE流式)、TTS API (OpenAI)
 - 前后端联调完成: Book Setup → Supabase、Chat → Claude SSE、TTS → OpenAI API
-- 尚未做: 认证(Supabase Auth)、部署(Vercel+Railway)
+- 已完成: 认证(Supabase Auth)、部署(Vercel部署了前端web， 后端部署在自有的Win Server 2022上)
 
 ## 关键设计决策
 
