@@ -190,51 +190,72 @@ export default function ReadPage({
       sentenceIndex: 0,
     };
 
-    const text = paragraphs[startPos.paragraphIndex];
-    if (!text) return;
-
-    // Switch active paragraph if needed
-    if (startPos.paragraphIndex !== activeParagraph) {
-      setActiveParagraph(startPos.paragraphIndex);
-    }
-
-    const sentences = splitSentences(text);
-    if (sentences.length === 0) return;
-
-    const startIdx = Math.min(startPos.sentenceIndex, sentences.length - 1);
+    if (!paragraphs[startPos.paragraphIndex]) return;
 
     ttsAbortRef.current = false;
     setTtsState("playing");
 
-    // Pre-fetch starting sentence immediately
-    let nextAudioPromise: Promise<string> | null = fetchTtsAudio(sentences[startIdx].trim(), ttsVoice, ttsSpeed);
+    let nextAudioPromise: Promise<string> | null = null;
 
-    for (let i = startIdx; i < sentences.length; i++) {
+    // Iterate over all paragraphs from startPos to end
+    outer: for (let pIdx = startPos.paragraphIndex; pIdx < paragraphs.length; pIdx++) {
       if (ttsAbortRef.current) break;
 
-      setTtsSentenceIndex(i);
+      const text = paragraphs[pIdx];
+      if (!text?.trim()) continue; // skip empty paragraphs
 
-      try {
-        // Wait for current sentence audio
-        const url = await nextAudioPromise!;
+      setActiveParagraph(pIdx);
 
-        // Start pre-fetching next sentence while this one plays
-        if (i + 1 < sentences.length) {
-          nextAudioPromise = fetchTtsAudio(sentences[i + 1].trim(), ttsVoice, ttsSpeed);
+      const sentences = splitSentences(text);
+      if (sentences.length === 0) continue;
+
+      const startSentence = pIdx === startPos.paragraphIndex
+        ? Math.min(startPos.sentenceIndex, sentences.length - 1)
+        : 0;
+
+      // Pre-fetch first sentence of this paragraph if not already pre-fetched
+      if (!nextAudioPromise) {
+        nextAudioPromise = fetchTtsAudio(sentences[startSentence].trim(), ttsVoice, ttsSpeed);
+      }
+
+      for (let i = startSentence; i < sentences.length; i++) {
+        if (ttsAbortRef.current) break outer;
+
+        setTtsSentenceIndex(i);
+
+        try {
+          const url = await nextAudioPromise!;
+
+          // Pre-fetch: next sentence in paragraph, or first sentence of next paragraph
+          if (i + 1 < sentences.length) {
+            nextAudioPromise = fetchTtsAudio(sentences[i + 1].trim(), ttsVoice, ttsSpeed);
+          } else {
+            // Look ahead to next non-empty paragraph
+            nextAudioPromise = null;
+            for (let nextP = pIdx + 1; nextP < paragraphs.length; nextP++) {
+              const nextText = paragraphs[nextP];
+              if (nextText?.trim()) {
+                const nextSentences = splitSentences(nextText);
+                if (nextSentences.length > 0) {
+                  nextAudioPromise = fetchTtsAudio(nextSentences[0].trim(), ttsVoice, ttsSpeed);
+                }
+                break;
+              }
+            }
+          }
+
+          if (ttsAbortRef.current) break outer;
+
+          await new Promise<void>((resolve, reject) => {
+            const audio = new Audio(url);
+            audioRef.current = audio;
+            audio.onended = () => resolve();
+            audio.onerror = () => reject();
+            audio.play().catch(reject);
+          });
+        } catch {
+          break outer;
         }
-
-        if (ttsAbortRef.current) break;
-
-        // Play current sentence
-        await new Promise<void>((resolve, reject) => {
-          const audio = new Audio(url);
-          audioRef.current = audio;
-          audio.onended = () => resolve();
-          audio.onerror = () => reject();
-          audio.play().catch(reject);
-        });
-      } catch {
-        break;
       }
     }
 
