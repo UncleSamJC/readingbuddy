@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Book, Chapter, ChatMessage } from "@readbuddy/shared-types";
-import { MAX_CHAPTERS, MAX_WORDS_PER_CHAPTER } from "@readbuddy/shared-types";
+import type { Book, Chapter, ChatMessage, UserPlan } from "@readbuddy/shared-types";
+import { MAX_WORDS_PER_CHAPTER, PLAN_CHAPTER_LIMITS } from "@readbuddy/shared-types";
 import * as api from "./api";
 
 interface BookState {
@@ -81,6 +81,7 @@ export const TTS_SPEED_OPTIONS = [
 interface SettingsState {
   ttsVoice: TtsVoiceId;
   ttsSpeed: number;
+  userPlan: UserPlan;
   setTtsVoice: (voice: TtsVoiceId) => void;
   setTtsSpeed: (speed: number) => void;
 }
@@ -165,6 +166,7 @@ export const useAppStore = create<AppState>()(
             set({
               ttsVoice: (settings.tts_voice || "shimmer") as TtsVoiceId,
               ttsSpeed: settings.tts_speed || 0.85,
+              userPlan: (settings.plan as UserPlan) || "Free",
             });
           }
 
@@ -225,8 +227,9 @@ export const useAppStore = create<AppState>()(
 
       addChapter: async (title, rawText) => {
         const state = get();
-        if (state.chapters.length >= MAX_CHAPTERS) {
-          return { ok: false, error: `Maximum ${MAX_CHAPTERS} chapters allowed` };
+        const maxChapters = PLAN_CHAPTER_LIMITS[state.userPlan];
+        if (state.chapters.length >= maxChapters) {
+          return { ok: false, error: `Maximum ${maxChapters} chapters allowed` };
         }
         const wordCount = countWords(rawText);
         if (wordCount > MAX_WORDS_PER_CHAPTER) {
@@ -389,6 +392,7 @@ export const useAppStore = create<AppState>()(
       // ── Settings ──
       ttsVoice: "shimmer",
       ttsSpeed: 0.85,
+      userPlan: "Free" as UserPlan,
       setTtsVoice: (voice) => {
         set({ ttsVoice: voice });
         api.updateUserSettings({ tts_voice: voice }).catch(() => {});
@@ -407,6 +411,7 @@ export const useAppStore = create<AppState>()(
         markedWords: state.markedWords,
         ttsVoice: state.ttsVoice,
         ttsSpeed: state.ttsSpeed,
+        userPlan: state.userPlan,
       }),
     }
   )

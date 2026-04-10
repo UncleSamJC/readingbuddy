@@ -6,12 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChapterList } from "@/components/book-setup/ChapterList";
 import { ChapterForm } from "@/components/book-setup/ChapterForm";
-import { MAX_CHAPTERS } from "@readbuddy/shared-types";
+import { PLAN_CHAPTER_LIMITS } from "@readbuddy/shared-types";
 
 export default function BookSetupPage() {
   const currentBook = useAppStore((s) => s.currentBook);
   const chapters = useAppStore((s) => s.chapters);
   const isBookLoading = useAppStore((s) => s.isBookLoading);
+  const userPlan = useAppStore((s) => s.userPlan);
   const initBook = useAppStore((s) => s.initBook);
   const setBookTitle = useAppStore((s) => s.setBookTitle);
   const setBookAuthor = useAppStore((s) => s.setBookAuthor);
@@ -32,7 +33,8 @@ export default function BookSetupPage() {
     ? chapters.find((ch) => ch.id === editingId)
     : null;
 
-  const canAddMore = chapters.length < MAX_CHAPTERS;
+  const maxChapters = PLAN_CHAPTER_LIMITS[userPlan];
+  const canAddMore = chapters.length < maxChapters;
 
   async function handleAdd(title: string, rawText: string) {
     setIsSaving(true);
@@ -149,9 +151,17 @@ export default function BookSetupPage() {
 
       {/* Hint when chapters are full */}
       {!canAddMore && !editingId && (
-        <p className="text-center text-sm text-muted-foreground">
-          Maximum {MAX_CHAPTERS} chapters reached.
-        </p>
+        <div className="rounded-lg border border-border bg-muted/50 px-4 py-3 text-center text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">
+            Maximum {maxChapters} chapters reached
+          </p>
+          <p className="mt-0.5">
+            You are on the <span className="font-medium text-primary">{userPlan}</span> plan.
+            {userPlan !== "Pro" && (
+              <> To add more chapters, please contact admin to upgrade your plan.</>
+            )}
+          </p>
+        </div>
       )}
 
       {/* Empty state: auto-show form */}

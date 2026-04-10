@@ -15,17 +15,18 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
 
     if (error || !data) {
       // Return defaults if no settings yet
-      return reply.send({ tts_voice: "shimmer", tts_speed: 0.85 });
+      return reply.send({ tts_voice: "shimmer", tts_speed: 0.85, plan: "Free" });
     }
     return reply.send(data);
   });
 
   // PUT /api/user/settings
   app.put<{
-    Body: { tts_voice?: string; tts_speed?: number };
+    Body: { tts_voice?: string; tts_speed?: number; plan?: unknown };
   }>("/settings", async (request, reply) => {
     const userId = (request as any).userId;
     const { tts_voice, tts_speed } = request.body;
+    // `plan` is intentionally excluded — only admins can change it via DB
 
     const { data, error } = await supabase
       .from("user_settings")

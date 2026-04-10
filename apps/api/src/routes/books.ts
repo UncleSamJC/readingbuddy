@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { supabase } from "../db/supabase.js";
+import { PLAN_CHAPTER_LIMITS, type UserPlan } from "@readbuddy/shared-types";
 
-const MAX_CHAPTERS = 5;
 const MAX_WORDS_PER_CHAPTER = 3000;
 
 function cleanText(text: string): string {
@@ -114,16 +114,28 @@ export const bookRoutes: FastifyPluginAsync = async (app) => {
     Params: { bookId: string };
     Body: { title: string; rawText: string; chapterNum: number };
   }>("/:bookId/chapters", async (request, reply) => {
+    const userId = (request as any).userId;
     const { bookId } = request.params;
     const { title, rawText, chapterNum } = request.body;
+
+    // Resolve user plan
+    const { data: settings } = await supabase
+      .from("user_settings")
+      .select("plan")
+      .eq("user_id", userId)
+      .single();
+    const plan = ((settings?.plan as UserPlan) ?? "Free");
+    const maxChapters = PLAN_CHAPTER_LIMITS[plan];
 
     const { count } = await supabase
       .from("chapters")
       .select("*", { count: "exact", head: true })
       .eq("book_id", bookId);
 
-    if ((count ?? 0) >= MAX_CHAPTERS) {
-      return reply.status(400).send({ error: `Maximum ${MAX_CHAPTERS} chapters per book` });
+    if ((count ?? 0) >= maxChapters) {
+      return reply.status(400).send({
+        error: `Your ${plan} plan allows a maximum of ${maxChapters} chapters per book`,
+      });
     }
 
     const cleaned = cleanText(rawText);
