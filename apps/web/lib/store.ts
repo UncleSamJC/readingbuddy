@@ -103,6 +103,10 @@ function countWords(text: string): number {
   return trimmed.split(/\s+/).length;
 }
 
+function sortChapters<T extends { chapter_num: number }>(chapters: T[]): T[] {
+  return [...chapters].sort((a, b) => a.chapter_num - b.chapter_num);
+}
+
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -127,10 +131,10 @@ export const useAppStore = create<AppState>()(
                 is_active: true,
                 created_at: "",
               },
-              chapters: bookData.chapters.map((ch) => ({
+              chapters: sortChapters(bookData.chapters.map((ch) => ({
                 ...ch,
                 book_id: bookData.id,
-              })),
+              }))),
             });
           } else if (title) {
             // Create new book
@@ -266,7 +270,7 @@ export const useAppStore = create<AppState>()(
             rawText,
             state.chapters.length + 1
           ) as Chapter;
-          set({ chapters: [...get().chapters, { ...chapter, book_id: bookId }] });
+          set({ chapters: sortChapters([...get().chapters, { ...chapter, book_id: bookId }]) });
           return { ok: true };
         } catch (err) {
           return { ok: false, error: err instanceof Error ? err.message : "Failed to add chapter" };
@@ -303,9 +307,11 @@ export const useAppStore = create<AppState>()(
         try {
           await api.deleteChapter(bookId, id);
           set((s) => ({
-            chapters: s.chapters
-              .filter((ch) => ch.id !== id)
-              .map((ch, i) => ({ ...ch, chapter_num: i + 1 })),
+            chapters: sortChapters(
+              s.chapters
+                .filter((ch) => ch.id !== id)
+                .map((ch, i) => ({ ...ch, chapter_num: i + 1 }))
+            ),
           }));
         } catch (err) {
           console.error("Failed to delete chapter:", err);

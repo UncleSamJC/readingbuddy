@@ -82,14 +82,10 @@ export default function HomePage() {
                 <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted">
                   <div
                     className={cn(
-                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold",
-                      started
-                        ? "bg-primary/15 text-primary"
-                        : "bg-muted text-muted-foreground"
+                      "h-2.5 w-2.5 shrink-0 rounded-full",
+                      started ? "bg-primary" : "bg-muted-foreground/30"
                     )}
-                  >
-                    {ch.chapter_num}
-                  </div>
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{ch.title}</p>
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">

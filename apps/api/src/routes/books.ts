@@ -188,9 +188,26 @@ export const bookRoutes: FastifyPluginAsync = async (app) => {
   app.delete<{ Params: { bookId: string; chapterId: string } }>(
     "/:bookId/chapters/:chapterId",
     async (request, reply) => {
-      const { chapterId } = request.params;
+      const { bookId, chapterId } = request.params;
+
       const { error } = await supabase.from("chapters").delete().eq("id", chapterId);
       if (error) return reply.status(500).send({ error: error.message });
+
+      // Renumber remaining chapters sequentially (1, 2, 3 ...)
+      const { data: remaining } = await supabase
+        .from("chapters")
+        .select("id")
+        .eq("book_id", bookId)
+        .order("chapter_num");
+
+      if (remaining) {
+        await Promise.all(
+          remaining.map((ch, i) =>
+            supabase.from("chapters").update({ chapter_num: i + 1 }).eq("id", ch.id)
+          )
+        );
+      }
+
       return reply.status(204).send();
     }
   );

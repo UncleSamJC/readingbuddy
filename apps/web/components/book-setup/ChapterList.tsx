@@ -29,12 +29,7 @@ export function ChapterList({ chapters, maxChapters, onEdit, onDelete }: Chapter
         <Card key={ch.id}>
           <CardContent className="flex items-center justify-between py-3">
             <div className="min-w-0 flex-1">
-              <p className="font-medium">
-                <span className="mr-2 text-muted-foreground">
-                  {ch.chapter_num}.
-                </span>
-                {ch.title}
-              </p>
+              <p className="font-medium">{ch.title}</p>
               <p className="text-sm text-muted-foreground">
                 {ch.word_count.toLocaleString()} words
               </p>
