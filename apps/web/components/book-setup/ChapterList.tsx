@@ -15,7 +15,7 @@ export function ChapterList({ chapters, maxChapters, onEdit, onDelete }: Chapter
   if (chapters.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border py-8 text-center text-muted-foreground">
-        No chapters yet. Add your first chapter below.
+        No chapters yet! Add your first chapter below.
       </div>
     );
   }
