@@ -13,12 +13,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { BookOpen, Mic, Settings, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PLAN_CHAPTER_LIMITS } from "@readbuddy/shared-types";
 
 export default function HomePage() {
   const currentBook = useAppStore((s) => s.currentBook);
   const chapters = useAppStore((s) => s.chapters);
   const readingProgress = useAppStore((s) => s.readingProgress);
   const markedWords = useAppStore((s) => s.markedWords);
+  const userPlan = useAppStore((s) => s.userPlan);
   const initBook = useAppStore((s) => s.initBook);
   const hasBook = chapters.length > 0;
 
@@ -28,6 +30,7 @@ export default function HomePage() {
 
   const totalWords = chapters.reduce((sum, ch) => sum + ch.word_count, 0);
   const chaptersStarted = chapters.filter((ch) => readingProgress[ch.id]).length;
+  const maxChapters = PLAN_CHAPTER_LIMITS[userPlan];
 
   // ── No book: welcome / onboarding ──
   if (!hasBook) {
@@ -56,7 +59,7 @@ export default function HomePage() {
           <p className="text-sm text-muted-foreground">by {currentBook.author}</p>
         )}
         <p className="text-sm text-muted-foreground">
-          {chapters.length} chapter{chapters.length > 1 ? "s" : ""} &middot;{" "}
+          {chapters.length} / {maxChapters} chapters &middot;{" "}
           {totalWords.toLocaleString()} words &middot;{" "}
           {chaptersStarted} / {chapters.length} started
         </p>
