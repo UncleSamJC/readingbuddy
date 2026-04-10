@@ -122,6 +122,7 @@ export default function BookSetupPage() {
         </div>
         <ChapterList
           chapters={chapters}
+          maxChapters={maxChapters}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />

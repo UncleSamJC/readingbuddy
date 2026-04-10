@@ -1,17 +1,17 @@
 "use client";
 
 import type { Chapter } from "@readbuddy/shared-types";
-import { MAX_CHAPTERS } from "@readbuddy/shared-types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface ChapterListProps {
   chapters: Chapter[];
+  maxChapters: number;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
-export function ChapterList({ chapters, onEdit, onDelete }: ChapterListProps) {
+export function ChapterList({ chapters, maxChapters, onEdit, onDelete }: ChapterListProps) {
   if (chapters.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border py-8 text-center text-muted-foreground">
@@ -23,7 +23,7 @@ export function ChapterList({ chapters, onEdit, onDelete }: ChapterListProps) {
   return (
     <div className="space-y-2">
       <p className="text-sm text-muted-foreground">
-        {chapters.length} / {MAX_CHAPTERS} chapters
+        {chapters.length} / {maxChapters} chapters
       </p>
       {chapters.map((ch) => (
         <Card key={ch.id}>
