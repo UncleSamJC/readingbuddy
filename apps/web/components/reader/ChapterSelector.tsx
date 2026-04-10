@@ -104,7 +104,7 @@ export function ChapterSelector({
                       : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                   }`}
                 >
-                  {ch.chapter_num}. {ch.title}
+                  {ch.title}
                 </div>
               </CarouselItem>
             );
