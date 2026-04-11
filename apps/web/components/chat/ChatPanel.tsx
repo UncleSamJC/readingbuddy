@@ -63,24 +63,28 @@ export function ChatPanel({
       "w-[calc(100vw-2rem)] sm:w-80",
       "h-100 sm:h-110"
     )}>
-      {/* Close button */}
-      {onClose && (
-        <button
-          onClick={onClose}
-          className="absolute right-3 top-3 z-10 rounded-full p-1 text-primary hover:text-primary/70"
-          title="Close"
-        >
-          <X className="h-5 w-5" strokeWidth={2.5} />
-        </button>
-      )}
-
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto p-4 pt-10">
-        {messages.length === 0 && !isLoading && (
-          <p className="py-4 text-center text-sm text-muted-foreground">
+      {/* Top bar: welcome text + close button */}
+      <div className="flex items-center gap-2 px-4 pt-3 pb-1 shrink-0">
+        {messages.length === 0 && !isLoading ? (
+          <p className="flex-1 text-center text-sm text-muted-foreground">
             Hi! I&apos;m Roz. Click a sentence or ask me anything about the book!
           </p>
+        ) : (
+          <div className="flex-1" />
         )}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="shrink-0 rounded-full p-1 text-primary hover:text-primary/70"
+            title="Close"
+          >
+            <X className="h-5 w-5" strokeWidth={2.5} />
+          </button>
+        )}
+      </div>
+
+      {/* Messages */}
+      <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto px-4 pb-4">
         {messages.map((msg) => (
           <MessageBubble
             key={msg.id}
