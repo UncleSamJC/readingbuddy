@@ -4,8 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import type { ChatMessage } from "@readbuddy/shared-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Send } from "lucide-react";
+import { Send, X, Minus, BotMessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatPanelProps {
@@ -13,11 +12,11 @@ interface ChatPanelProps {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
   streamingMessageId?: string | null;
+  onClose?: () => void;
 }
 
 function MessageBubble({ msg, isStreaming }: { msg: ChatMessage; isStreaming: boolean }) {
   const isAssistant = msg.role === "assistant";
-
   return (
     <div
       className={cn(
@@ -40,15 +39,18 @@ export function ChatPanel({
   onSendMessage,
   isLoading,
   streamingMessageId,
+  onClose,
 }: ChatPanelProps) {
   const [input, setInput] = useState("");
+  const [minimized, setMinimized] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (minimized) return;
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, minimized]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,47 +60,82 @@ export function ChatPanel({
   }
 
   return (
-    <Card className="flex max-h-[280px] flex-col overflow-hidden sm:max-h-[400px]">
-      <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto p-4">
-        {messages.length === 0 && !isLoading && (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            Hi! I&apos;m Roz. Click a sentence or ask me anything about the book!
-          </p>
-        )}
-        {messages.map((msg) => (
-          <MessageBubble
-            key={msg.id}
-            msg={msg}
-            isStreaming={msg.id === streamingMessageId}
-          />
-        ))}
-        {isLoading && !streamingMessageId && (
-          <div className="max-w-[85%] rounded-xl bg-secondary px-4 py-2.5 text-sm text-muted-foreground">
-            <span className="inline-flex gap-1">
-              <span className="animate-bounce">.</span>
-              <span className="animate-bounce" style={{ animationDelay: "0.15s" }}>.</span>
-              <span className="animate-bounce" style={{ animationDelay: "0.3s" }}>.</span>
-            </span>
-          </div>
+    <div className={cn(
+      "fixed bottom-4 right-4 z-50 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl",
+      "w-[calc(100vw-2rem)] sm:w-80",
+      minimized ? "h-auto" : "h-[400px] sm:h-[440px]"
+    )}>
+      {/* Header */}
+      <div className="flex items-center gap-2 bg-primary px-4 py-3">
+        <BotMessageSquare className="h-5 w-5 shrink-0 text-primary-foreground" />
+        <span className="flex-1 text-sm font-semibold text-primary-foreground">
+          Ask Roz
+        </span>
+        <button
+          onClick={() => setMinimized((v) => !v)}
+          className="rounded p-0.5 text-primary-foreground/80 hover:text-primary-foreground"
+          title={minimized ? "Expand" : "Minimize"}
+        >
+          <Minus className="h-4 w-4" />
+        </button>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="rounded p-0.5 text-primary-foreground/80 hover:text-primary-foreground"
+            title="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
         )}
       </div>
-      <form onSubmit={handleSubmit} className="flex gap-2 border-t border-border p-2.5 sm:p-3">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask Roz..."
-          disabled={isLoading}
-          className="flex-1 text-base sm:text-sm"
-        />
-        <Button
-          type="submit"
-          size="icon"
-          disabled={isLoading || !input.trim()}
-          className="h-10 w-10 shrink-0"
-        >
-          <Send className="h-4 w-4" />
-        </Button>
-      </form>
-    </Card>
+
+      {!minimized && (
+        <>
+          {/* Messages */}
+          <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto p-4">
+            {messages.length === 0 && !isLoading && (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                Hi! I&apos;m Roz. Click a sentence or ask me anything about the book!
+              </p>
+            )}
+            {messages.map((msg) => (
+              <MessageBubble
+                key={msg.id}
+                msg={msg}
+                isStreaming={msg.id === streamingMessageId}
+              />
+            ))}
+            {isLoading && !streamingMessageId && (
+              <div className="max-w-[85%] rounded-xl bg-secondary px-4 py-2.5 text-sm text-muted-foreground">
+                <span className="inline-flex gap-1">
+                  <span className="animate-bounce">.</span>
+                  <span className="animate-bounce" style={{ animationDelay: "0.15s" }}>.</span>
+                  <span className="animate-bounce" style={{ animationDelay: "0.3s" }}>.</span>
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Input */}
+          <form onSubmit={handleSubmit} className="flex gap-2 border-t border-border p-2.5 sm:p-3">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask Roz..."
+              disabled={isLoading}
+              className="flex-1 text-base sm:text-sm"
+            />
+            <Button
+              type="submit"
+              size="icon"
+              disabled={isLoading || !input.trim()}
+              className="h-10 w-10 shrink-0"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </form>
+        </>
+      )}
+    </div>
   );
 }

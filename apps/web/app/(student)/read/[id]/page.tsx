@@ -12,7 +12,7 @@ import { ChapterSelector } from "@/components/reader/ChapterSelector";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { ReadingResult } from "@/components/reader/ReadingResult";
 import { Button } from "@/components/ui/button";
-import { Highlighter } from "lucide-react";
+import { Highlighter, BotMessageSquare } from "lucide-react";
 import type { ChatMessage } from "@readbuddy/shared-types";
 
 function splitParagraphs(text: string): string[] {
@@ -53,12 +53,14 @@ export default function ReadPage({
   // Local state
   const [activeParagraph, setActiveParagraph] = useState(0);
   const [isMarkingMode, setIsMarkingMode] = useState(false);
-  const [showChat, setShowChat] = useState(true);
+  const [showChat, setShowChat] = useState(false);
   const [wordMatches, setWordMatches] = useState<WordMatch[] | null>(null);
   const [readingResult, setReadingResult] = useState<WordMatch[] | null>(null);
   const [ttsState, setTtsState] = useState<TtsState>("idle");
   const [ttsSentenceIndex, setTtsSentenceIndex] = useState<number | null>(null);
   const ttsAbortRef = useRef(false);
+  const ttsGenerationRef = useRef(0);          // incremented on each new playback session
+  const ttsCurrentPosRef = useRef({ paragraphIndex: 0, sentenceIndex: 0 });
 
   // Chapter data
   const chapter = useMemo(
@@ -181,88 +183,109 @@ export default function ReadPage({
 
   // ── TTS (sentence-by-sentence with pre-fetching) ──
 
-  const handleListenDemo = useCallback(async () => {
-    if (ttsState !== "idle") return;
-
-    // Start from first visible sentence in the card
-    const startPos = bookContentRef.current?.getFirstVisiblePosition() ?? {
-      paragraphIndex: activeParagraph,
-      sentenceIndex: 0,
-    };
-
-    if (!paragraphs[startPos.paragraphIndex]) return;
-
-    ttsAbortRef.current = false;
+  // Core TTS loop — accepts explicit start position and a generation id to detect stale runs
+  const runTtsFrom = useCallback(async (
+    startParagraphIndex: number,
+    startSentenceIndex: number,
+    gen: number,
+  ) => {
     setTtsState("playing");
-
     let nextAudioPromise: Promise<string> | null = null;
 
-    // Iterate over all paragraphs from startPos to end
-    outer: for (let pIdx = startPos.paragraphIndex; pIdx < paragraphs.length; pIdx++) {
-      if (ttsAbortRef.current) break;
+    outer: for (let pIdx = startParagraphIndex; pIdx < paragraphs.length; pIdx++) {
+      if (ttsGenerationRef.current !== gen) break;
 
       const text = paragraphs[pIdx];
-      if (!text?.trim()) continue; // skip empty paragraphs
+      if (!text?.trim()) continue;
 
       setActiveParagraph(pIdx);
-
       const sentences = splitSentences(text);
       if (sentences.length === 0) continue;
 
-      const startSentence = pIdx === startPos.paragraphIndex
-        ? Math.min(startPos.sentenceIndex, sentences.length - 1)
+      const startSentence = pIdx === startParagraphIndex
+        ? Math.min(startSentenceIndex, sentences.length - 1)
         : 0;
 
-      // Pre-fetch first sentence of this paragraph if not already pre-fetched
       if (!nextAudioPromise) {
         nextAudioPromise = fetchTtsAudio(sentences[startSentence].trim(), ttsVoice, ttsSpeed);
       }
 
       for (let i = startSentence; i < sentences.length; i++) {
-        if (ttsAbortRef.current) break outer;
+        if (ttsGenerationRef.current !== gen) break outer;
 
         setTtsSentenceIndex(i);
+        ttsCurrentPosRef.current = { paragraphIndex: pIdx, sentenceIndex: i };
 
+        let url: string | null = null;
         try {
-          const url = await nextAudioPromise!;
+          url = await nextAudioPromise!;
 
-          // Pre-fetch: next sentence in paragraph, or first sentence of next paragraph
+          // Pre-fetch next sentence or first sentence of next paragraph
           if (i + 1 < sentences.length) {
             nextAudioPromise = fetchTtsAudio(sentences[i + 1].trim(), ttsVoice, ttsSpeed);
           } else {
-            // Look ahead to next non-empty paragraph
             nextAudioPromise = null;
             for (let nextP = pIdx + 1; nextP < paragraphs.length; nextP++) {
               const nextText = paragraphs[nextP];
               if (nextText?.trim()) {
-                const nextSentences = splitSentences(nextText);
-                if (nextSentences.length > 0) {
-                  nextAudioPromise = fetchTtsAudio(nextSentences[0].trim(), ttsVoice, ttsSpeed);
-                }
+                const ns = splitSentences(nextText);
+                if (ns.length > 0) nextAudioPromise = fetchTtsAudio(ns[0].trim(), ttsVoice, ttsSpeed);
                 break;
               }
             }
           }
 
-          if (ttsAbortRef.current) break outer;
+          if (ttsGenerationRef.current !== gen) break outer;
 
           await new Promise<void>((resolve, reject) => {
-            const audio = new Audio(url);
+            const audio = new Audio(url!);
             audioRef.current = audio;
-            audio.onended = () => resolve();
-            audio.onerror = () => reject();
-            audio.play().catch(reject);
+            audio.onended = () => { URL.revokeObjectURL(url!); resolve(); };
+            audio.onerror = (e) => {
+              console.error(`[TTS] p=${pIdx} s=${i}: audio error`, e);
+              URL.revokeObjectURL(url!);
+              reject(new Error("audio_error"));
+            };
+            const p = audio.play();
+            if (p !== undefined) p.catch((err) => {
+              console.error(`[TTS] p=${pIdx} s=${i}: play() rejected`, err);
+              reject(err);
+            });
           });
-        } catch {
+        } catch (err) {
+          console.error(`[TTS] p=${pIdx} s=${i}: stopped`, err);
+          if (url) URL.revokeObjectURL(url);
           break outer;
         }
       }
     }
 
+    if (ttsGenerationRef.current === gen) {
+      audioRef.current = null;
+      setTtsSentenceIndex(null);
+      setTtsState("idle");
+    }
+  }, [paragraphs, ttsVoice, ttsSpeed]);
+
+  // Stop current session and start a new one from given position
+  const restartTtsFrom = useCallback((paragraphIndex: number, sentenceIndex: number) => {
+    ttsGenerationRef.current += 1;
+    audioRef.current?.pause();
     audioRef.current = null;
-    setTtsSentenceIndex(null);
-    setTtsState("idle");
-  }, [paragraphs, activeParagraph, ttsState, ttsVoice, ttsSpeed]);
+    const gen = ttsGenerationRef.current;
+    runTtsFrom(paragraphIndex, sentenceIndex, gen);
+  }, [runTtsFrom]);
+
+  const handleListenDemo = useCallback(() => {
+    if (ttsState !== "idle") return;
+    const startPos = bookContentRef.current?.getFirstVisiblePosition() ?? {
+      paragraphIndex: activeParagraph,
+      sentenceIndex: 0,
+    };
+    if (!paragraphs[startPos.paragraphIndex]) return;
+    ttsGenerationRef.current += 1;
+    runTtsFrom(startPos.paragraphIndex, startPos.sentenceIndex, ttsGenerationRef.current);
+  }, [paragraphs, activeParagraph, ttsState, runTtsFrom]);
 
   const handleTtsPause = useCallback(() => {
     audioRef.current?.pause();
@@ -275,7 +298,7 @@ export default function ReadPage({
   }, []);
 
   const handleTtsStop = useCallback(() => {
-    ttsAbortRef.current = true;
+    ttsGenerationRef.current += 1;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
@@ -283,6 +306,45 @@ export default function ReadPage({
     setTtsSentenceIndex(null);
     setTtsState("idle");
   }, []);
+
+  const handleTtsRepeat = useCallback(() => {
+    restartTtsFrom(ttsCurrentPosRef.current.paragraphIndex, ttsCurrentPosRef.current.sentenceIndex);
+  }, [restartTtsFrom]);
+
+  const handleTtsPrev = useCallback(() => {
+    const { paragraphIndex, sentenceIndex } = ttsCurrentPosRef.current;
+    if (sentenceIndex > 0) {
+      restartTtsFrom(paragraphIndex, sentenceIndex - 1);
+    } else {
+      // Go to last sentence of previous non-empty paragraph
+      for (let p = paragraphIndex - 1; p >= 0; p--) {
+        const text = paragraphs[p];
+        if (text?.trim()) {
+          const sentences = splitSentences(text);
+          restartTtsFrom(p, Math.max(0, sentences.length - 1));
+          return;
+        }
+      }
+    }
+  }, [paragraphs, restartTtsFrom]);
+
+  const handleTtsNext = useCallback(() => {
+    const { paragraphIndex, sentenceIndex } = ttsCurrentPosRef.current;
+    const text = paragraphs[paragraphIndex];
+    const sentences = text ? splitSentences(text) : [];
+    if (sentenceIndex < sentences.length - 1) {
+      restartTtsFrom(paragraphIndex, sentenceIndex + 1);
+    } else {
+      // Go to first sentence of next non-empty paragraph
+      for (let p = paragraphIndex + 1; p < paragraphs.length; p++) {
+        const nextText = paragraphs[p];
+        if (nextText?.trim()) {
+          restartTtsFrom(p, 0);
+          return;
+        }
+      }
+    }
+  }, [paragraphs, restartTtsFrom]);
 
   // ── Actions ──
 
@@ -431,9 +493,23 @@ export default function ReadPage({
         onTtsPause={handleTtsPause}
         onTtsResume={handleTtsResume}
         onTtsStop={handleTtsStop}
+        onTtsPrev={handleTtsPrev}
+        onTtsNext={handleTtsNext}
+        onTtsRepeat={handleTtsRepeat}
         isRecording={isRecording}
         ttsState={ttsState}
       />
+
+      {/* Floating Ask Roz button */}
+      {!showChat && (
+        <button
+          onClick={() => setShowChat(true)}
+          className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg hover:bg-primary/90 active:scale-95 transition-transform"
+        >
+          <BotMessageSquare className="h-4 w-4" />
+          Ask Roz
+        </button>
+      )}
 
       {/* Chat panel */}
       {showChat && (
@@ -442,6 +518,7 @@ export default function ReadPage({
           onSendMessage={handleSendMessage}
           isLoading={isAiLoading}
           streamingMessageId={streamingMessageId}
+          onClose={() => setShowChat(false)}
         />
       )}
     </div>
