@@ -12,7 +12,7 @@ import { ChapterSelector } from "@/components/reader/ChapterSelector";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { ReadingResult } from "@/components/reader/ReadingResult";
 import { Button } from "@/components/ui/button";
-import { Highlighter, BotMessageSquare } from "lucide-react";
+import { Highlighter, BotMessageSquare, Home } from "lucide-react";
 import type { ChatMessage } from "@readbuddy/shared-types";
 
 function splitParagraphs(text: string): string[] {
@@ -467,7 +467,18 @@ export default function ReadPage({
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
-        <h1 className="truncate text-xl font-bold">{currentBook?.title ?? "My Book"}</h1>
+        <div className="flex min-w-0 items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/")}
+            className="shrink-0 text-muted-foreground hover:text-foreground"
+            title="Back to Home"
+          >
+            <Home className="h-4 w-4" />
+          </Button>
+          <h1 className="truncate text-xl font-bold">{currentBook?.title ?? "My Book"}</h1>
+        </div>
         <Button
           variant={isMarkingMode ? "default" : "secondary"}
           size="sm"
