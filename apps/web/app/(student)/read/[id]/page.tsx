@@ -384,10 +384,10 @@ export default function ReadPage({
 
   const handleSentenceClick = useCallback(
     (sentence: string) => {
-      setShowChat(true);
+      if (!showChat) return;
       handleSendMessage(`What does this mean: "${sentence}"`);
     },
-    [handleSendMessage]
+    [showChat, handleSendMessage]
   );
 
   const handleChapterSwitch = useCallback(
