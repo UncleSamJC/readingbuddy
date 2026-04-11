@@ -80,7 +80,6 @@ export default function ReadPage({
   // ── TTS cache helpers ──
 
   const clearTtsCache = useCallback(() => {
-    ttsCacheRef.current.forEach((url) => URL.revokeObjectURL(url));
     ttsCacheRef.current.clear();
     ttsCacheOrderRef.current = [];
   }, []);
@@ -95,8 +94,6 @@ export default function ReadPage({
 
     while (order.length >= TTS_CACHE_SIZE) {
       const evicted = order.shift()!;
-      const evictedUrl = cache.get(evicted);
-      if (evictedUrl) URL.revokeObjectURL(evictedUrl);
       cache.delete(evicted);
     }
     cache.set(sentence, url);
@@ -228,6 +225,11 @@ export default function ReadPage({
     setTtsState("playing");
     let nextAudioPromise: Promise<string> | null = null;
 
+    // Reuse a single Audio element for the whole session so iOS Safari keeps
+    // it "unlocked" after the first user-gesture-triggered play().
+    const audio = new Audio();
+    audioRef.current = audio;
+
     outer: for (let pIdx = startParagraphIndex; pIdx < paragraphs.length; pIdx++) {
       if (ttsGenerationRef.current !== gen) break;
 
@@ -272,16 +274,15 @@ export default function ReadPage({
 
           if (ttsGenerationRef.current !== gen) break outer;
 
+          // Change src on the same element — keeps iOS audio session unlocked
+          audio.src = url;
           await new Promise<void>((resolve, reject) => {
-            const audio = new Audio(url);
-            audioRef.current = audio;
-            audio.onended = () => resolve();
-            audio.onerror = (e) => {
+            audio.addEventListener("ended", () => resolve(), { once: true });
+            audio.addEventListener("error", (e) => {
               console.error(`[TTS] p=${pIdx} s=${i}: audio error`, e);
               reject(new Error("audio_error"));
-            };
-            const p = audio.play();
-            if (p !== undefined) p.catch((err) => {
+            }, { once: true });
+            audio.play().catch((err) => {
               console.error(`[TTS] p=${pIdx} s=${i}: play() rejected`, err);
               reject(err);
             });
@@ -426,9 +427,7 @@ export default function ReadPage({
       // Play the word immediately via TTS (no cache, one-shot)
       fetchTtsAudio(word, ttsVoice, ttsSpeed).then((url) => {
         const audio = new Audio(url);
-        audio.onended = () => URL.revokeObjectURL(url);
-        audio.onerror = () => URL.revokeObjectURL(url);
-        audio.play().catch(() => URL.revokeObjectURL(url));
+        audio.play().catch(() => {});
       }).catch(() => {});
     },
     [toggleMarkedWord, chapter?.title, ttsVoice, ttsSpeed]

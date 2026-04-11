@@ -178,7 +178,14 @@ export async function fetchTtsAudio(
   });
   if (!res.ok) throw new Error(`TTS error ${res.status}`);
   const blob = await res.blob();
-  return URL.createObjectURL(blob);
+  // Use data URL instead of blob URL — iOS Safari can revoke blob URLs under
+  // memory pressure, causing WebKitBlobResource errors on cached audio.
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
 
 // ── User Settings ──
