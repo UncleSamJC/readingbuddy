@@ -61,7 +61,7 @@ export function ChatPanel({
     <div className={cn(
       "fixed bottom-4 right-4 z-50 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl",
       "w-[calc(100vw-2rem)] sm:w-80",
-      "h-100 sm:h-110"
+      "h-[350px] sm:h-110"
     )}>
       {/* Top bar: welcome text + close button */}
       <div className="flex items-center gap-2 px-4 pt-3 pb-1 shrink-0">
