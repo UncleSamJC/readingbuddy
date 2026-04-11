@@ -61,6 +61,9 @@ export default function ReadPage({
   const ttsAbortRef = useRef(false);
   const ttsGenerationRef = useRef(0);          // incremented on each new playback session
   const ttsCurrentPosRef = useRef({ paragraphIndex: 0, sentenceIndex: 0 });
+  const ttsCacheRef = useRef<Map<string, string>>(new Map()); // sentence → blob URL
+  const ttsCacheOrderRef = useRef<string[]>([]);               // insertion order for eviction
+  const TTS_CACHE_SIZE = 3;
 
   // Chapter data
   const chapter = useMemo(
@@ -74,14 +77,47 @@ export default function ReadPage({
     [chapter]
   );
 
+  // ── TTS cache helpers ──
+
+  const clearTtsCache = useCallback(() => {
+    ttsCacheRef.current.forEach((url) => URL.revokeObjectURL(url));
+    ttsCacheRef.current.clear();
+    ttsCacheOrderRef.current = [];
+  }, []);
+
+  // Check cache first; fetch and store on miss. Evicts oldest when cache is full.
+  const cacheFetch = useCallback(async (sentence: string): Promise<string> => {
+    const cache = ttsCacheRef.current;
+    const order = ttsCacheOrderRef.current;
+    if (cache.has(sentence)) return cache.get(sentence)!;
+
+    const url = await fetchTtsAudio(sentence, ttsVoice, ttsSpeed);
+
+    while (order.length >= TTS_CACHE_SIZE) {
+      const evicted = order.shift()!;
+      const evictedUrl = cache.get(evicted);
+      if (evictedUrl) URL.revokeObjectURL(evictedUrl);
+      cache.delete(evicted);
+    }
+    cache.set(sentence, url);
+    order.push(sentence);
+    return url;
+  }, [ttsVoice, ttsSpeed]);
+
+  // Clear cache when voice/speed changes (cached audio is for old settings)
+  useEffect(() => {
+    clearTtsCache();
+  }, [ttsVoice, ttsSpeed, clearTtsCache]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       ttsAbortRef.current = true;
       audioRef.current?.pause();
       cancelStreamRef.current?.();
+      clearTtsCache();
     };
-  }, []);
+  }, [clearTtsCache]);
 
   // Track reading progress
   useEffect(() => {
@@ -207,7 +243,7 @@ export default function ReadPage({
         : 0;
 
       if (!nextAudioPromise) {
-        nextAudioPromise = fetchTtsAudio(sentences[startSentence].trim(), ttsVoice, ttsSpeed);
+        nextAudioPromise = cacheFetch(sentences[startSentence].trim());
       }
 
       for (let i = startSentence; i < sentences.length; i++) {
@@ -216,20 +252,19 @@ export default function ReadPage({
         setTtsSentenceIndex(i);
         ttsCurrentPosRef.current = { paragraphIndex: pIdx, sentenceIndex: i };
 
-        let url: string | null = null;
         try {
-          url = await nextAudioPromise!;
+          const url = await nextAudioPromise!;
 
           // Pre-fetch next sentence or first sentence of next paragraph
           if (i + 1 < sentences.length) {
-            nextAudioPromise = fetchTtsAudio(sentences[i + 1].trim(), ttsVoice, ttsSpeed);
+            nextAudioPromise = cacheFetch(sentences[i + 1].trim());
           } else {
             nextAudioPromise = null;
             for (let nextP = pIdx + 1; nextP < paragraphs.length; nextP++) {
               const nextText = paragraphs[nextP];
               if (nextText?.trim()) {
                 const ns = splitSentences(nextText);
-                if (ns.length > 0) nextAudioPromise = fetchTtsAudio(ns[0].trim(), ttsVoice, ttsSpeed);
+                if (ns.length > 0) nextAudioPromise = cacheFetch(ns[0].trim());
                 break;
               }
             }
@@ -238,12 +273,11 @@ export default function ReadPage({
           if (ttsGenerationRef.current !== gen) break outer;
 
           await new Promise<void>((resolve, reject) => {
-            const audio = new Audio(url!);
+            const audio = new Audio(url);
             audioRef.current = audio;
-            audio.onended = () => { URL.revokeObjectURL(url!); resolve(); };
+            audio.onended = () => resolve();
             audio.onerror = (e) => {
               console.error(`[TTS] p=${pIdx} s=${i}: audio error`, e);
-              URL.revokeObjectURL(url!);
               reject(new Error("audio_error"));
             };
             const p = audio.play();
@@ -254,7 +288,6 @@ export default function ReadPage({
           });
         } catch (err) {
           console.error(`[TTS] p=${pIdx} s=${i}: stopped`, err);
-          if (url) URL.revokeObjectURL(url);
           break outer;
         }
       }
@@ -265,7 +298,7 @@ export default function ReadPage({
       setTtsSentenceIndex(null);
       setTtsState("idle");
     }
-  }, [paragraphs, ttsVoice, ttsSpeed]);
+  }, [paragraphs, cacheFetch]);
 
   // Stop current session and start a new one from given position
   const restartTtsFrom = useCallback((paragraphIndex: number, sentenceIndex: number) => {
@@ -360,13 +393,14 @@ export default function ReadPage({
     (id: string) => {
       cancelStreamRef.current?.();
       handleTtsStop();
+      clearTtsCache();
       clearMessages();
       setActiveParagraph(0);
       setWordMatches(null);
       setReadingResult(null);
       router.push(`/read/${id}`);
     },
-    [clearMessages, router, handleTtsStop]
+    [clearMessages, router, handleTtsStop, clearTtsCache]
   );
 
   const handleReadAloud = useCallback(() => {
@@ -389,8 +423,15 @@ export default function ReadPage({
   const handleWordMark = useCallback(
     (word: string, sentence: string) => {
       toggleMarkedWord(word, sentence, chapter?.title ?? "");
+      // Play the word immediately via TTS (no cache, one-shot)
+      fetchTtsAudio(word, ttsVoice, ttsSpeed).then((url) => {
+        const audio = new Audio(url);
+        audio.onended = () => URL.revokeObjectURL(url);
+        audio.onerror = () => URL.revokeObjectURL(url);
+        audio.play().catch(() => URL.revokeObjectURL(url));
+      }).catch(() => {});
     },
-    [toggleMarkedWord, chapter?.title]
+    [toggleMarkedWord, chapter?.title, ttsVoice, ttsSpeed]
   );
 
   const handleRetryReading = useCallback(() => {
