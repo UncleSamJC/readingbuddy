@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAppStore } from "@/lib/store";
 import {
@@ -11,9 +11,10 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Mic, Settings, ArrowRight } from "lucide-react";
+import { BookOpen, Mic, Settings, ArrowRight, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PLAN_CHAPTER_LIMITS } from "@readbuddy/shared-types";
+import { usePullToRefresh } from "@/lib/use-pull-to-refresh";
 
 export default function HomePage() {
   const currentBook = useAppStore((s) => s.currentBook);
@@ -28,9 +29,28 @@ export default function HomePage() {
     initBook();
   }, [initBook]);
 
+  const handleRefresh = useCallback(async () => {
+    await initBook();
+  }, [initBook]);
+
+  const { pullDistance, isRefreshing } = usePullToRefresh(handleRefresh);
+
   const totalWords = chapters.reduce((sum, ch) => sum + ch.word_count, 0);
   const chaptersStarted = chapters.filter((ch) => readingProgress[ch.id]).length;
   const maxChapters = PLAN_CHAPTER_LIMITS[userPlan];
+
+  // ── Pull-to-refresh indicator ──
+  const pullIndicator = (
+    <div
+      className="flex items-center justify-center overflow-hidden transition-all duration-150"
+      style={{ height: isRefreshing ? 40 : pullDistance }}
+    >
+      <RefreshCw
+        className={cn("h-5 w-5 text-primary", isRefreshing && "animate-spin")}
+        style={{ transform: `rotate(${pullDistance * 3}deg)` }}
+      />
+    </div>
+  );
 
   // ── No book: welcome / onboarding ──
   if (!hasBook) {
@@ -52,6 +72,7 @@ export default function HomePage() {
   // ── Has book: dashboard ──
   return (
     <div className="space-y-6">
+      {pullIndicator}
       {/* Book header */}
       <div>
         <h1 className="text-2xl font-bold">{currentBook?.title ?? "My Book"}</h1>
