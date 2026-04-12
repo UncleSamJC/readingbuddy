@@ -122,11 +122,13 @@
     }
   body {
     @apply bg-background text-foreground;
+    padding-top: env(safe-area-inset-top, 0);
     padding-bottom: env(safe-area-inset-bottom, 0);
     -webkit-tap-highlight-color: transparent;
     }
   html {
     @apply font-sans;
+    background-color: oklch(1 0 0); /* --card: white, fills status bar safe area */
     }
   /* Larger touch targets for children */
   button, a, [role="button"] {
