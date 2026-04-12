@@ -48,6 +48,7 @@
 }
 
 :root {
+    --navbar-h: 3rem;   /* h-12 on mobile */
     --background: oklch(0.98 0.01 85);
     --foreground: oklch(0.25 0.02 50);
     --card: oklch(1 0 0);
@@ -122,9 +123,11 @@
     }
   body {
     @apply bg-background text-foreground;
-    padding-top: env(safe-area-inset-top, 0);
     padding-bottom: env(safe-area-inset-bottom, 0);
     -webkit-tap-highlight-color: transparent;
+    }
+  @media (min-width: 640px) {
+    :root { --navbar-h: 3.5rem; } /* h-14 on sm+ */
     }
   html {
     @apply font-sans;

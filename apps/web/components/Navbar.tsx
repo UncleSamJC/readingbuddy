@@ -17,7 +17,7 @@ export function Navbar() {
   const { signOut } = useAuth();
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-sm">
+    <nav className="fixed left-0 right-0 top-0 z-50 border-b border-border bg-card/80 backdrop-blur-sm" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="mx-auto flex h-12 max-w-4xl items-center justify-between px-3 sm:h-14 sm:px-4">
         <Link href="/" className="flex items-center text-lg font-bold text-primary sm:text-xl">
           Read with Roz

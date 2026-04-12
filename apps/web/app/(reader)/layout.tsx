@@ -29,7 +29,7 @@ export default function ReaderLayout({
   if (!user) return null;
 
   return (
-    <div className="mx-auto max-w-4xl px-3 py-4 sm:px-4 sm:py-6">
+    <div className="mx-auto max-w-4xl px-3 pb-4 sm:px-4 sm:pb-6" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}>
       {children}
     </div>
   );

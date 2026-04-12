@@ -32,7 +32,10 @@ export default function StudentLayout({
   return (
     <>
       <Navbar />
-      <div className="mx-auto max-w-4xl px-3 py-4 sm:px-4 sm:py-6">
+      <div
+        className="mx-auto max-w-4xl px-3 pb-4 sm:px-4 sm:pb-6"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + var(--navbar-h) + 1rem)' }}
+      >
         {children}
       </div>
     </>
