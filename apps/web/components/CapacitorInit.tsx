@@ -4,23 +4,19 @@ import { useEffect } from "react";
 
 export function CapacitorInit() {
   useEffect(() => {
-    // Only runs in Capacitor native app environment
-    if (typeof window === "undefined") return;
+    // Capacitor injects itself as window.Capacitor in the native WebView.
+    // This code never runs in a normal browser build, so no npm dependency needed.
+    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; Plugins?: Record<string, unknown> } }).Capacitor;
+    if (!cap?.isNativePlatform?.()) return;
 
-    async function initStatusBar() {
-      try {
-        const { Capacitor } = await import("@capacitor/core");
-        if (!Capacitor.isNativePlatform()) return;
+    const StatusBar = cap.Plugins?.["StatusBar"] as {
+      setStyle?: (o: { style: string }) => Promise<void>;
+      setBackgroundColor?: (o: { color: string }) => Promise<void>;
+    } | undefined;
 
-        const { StatusBar, Style } = await import("@capacitor/status-bar");
-        await StatusBar.setStyle({ style: Style.Light }); // dark text on light background
-        await StatusBar.setBackgroundColor({ color: "#ffffff" });
-      } catch {
-        // Not in Capacitor environment, ignore
-      }
-    }
-
-    initStatusBar();
+    if (!StatusBar) return;
+    StatusBar.setStyle?.({ style: "LIGHT" }).catch(() => {});
+    StatusBar.setBackgroundColor?.({ color: "#ffffff" }).catch(() => {});
   }, []);
 
   return null;
