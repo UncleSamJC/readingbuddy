@@ -19,5 +19,11 @@
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "npm@10.8.2"
+  "packageManager": "npm@10.8.2",
+  "dependencies": {
+    "@capacitor/cli": "8.3.0",
+    "@capacitor/core": "8.3.0",
+    "@capacitor/ios": "8.3.0",
+    "@capacitor/status-bar": "8.0.2"
+  }
 }

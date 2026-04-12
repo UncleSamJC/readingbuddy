@@ -42,7 +42,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <h1 className="mb-1 text-2xl font-bold text-primary">ReadingBuddy</h1>
+          <h1 className="mb-1 text-2xl font-bold text-primary">Read with Roz</h1>
           <CardTitle className="text-lg">
             {mode === "login" ? "Welcome back" : "Create an account"}
           </CardTitle>
