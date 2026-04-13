@@ -12,6 +12,7 @@ import { ChapterSelector } from "@/components/reader/ChapterSelector";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { ReadingResult } from "@/components/reader/ReadingResult";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Highlighter, BotMessageSquare, Home } from "lucide-react";
 import type { ChatMessage } from "@readbuddy/shared-types";
 
@@ -49,11 +50,13 @@ export default function ReadPage({
   const toggleMarkedWord = useAppStore((s) => s.toggleMarkedWord);
   const ttsVoice = useAppStore((s) => s.ttsVoice);
   const ttsSpeed = useAppStore((s) => s.ttsSpeed);
+  const userPlan = useAppStore((s) => s.userPlan);
 
   // Local state
   const [activeParagraph, setActiveParagraph] = useState(0);
   const [isMarkingMode, setIsMarkingMode] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [wordMatches, setWordMatches] = useState<WordMatch[] | null>(null);
   const [readingResult, setReadingResult] = useState<WordMatch[] | null>(null);
   const [ttsState, setTtsState] = useState<TtsState>("idle");
@@ -554,7 +557,13 @@ export default function ReadPage({
       {/* Floating Ask Roz button */}
       {!showChat && (
         <button
-          onClick={() => setShowChat(true)}
+          onClick={() => {
+            if (userPlan === "Free") {
+              setShowUpgradeDialog(true);
+            } else {
+              setShowChat(true);
+            }
+          }}
           className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg hover:bg-primary/90 active:scale-95 transition-transform"
         >
           <BotMessageSquare className="h-4 w-4" />
@@ -572,6 +581,21 @@ export default function ReadPage({
           onClose={() => setShowChat(false)}
         />
       )}
+
+      {/* Free plan upgrade dialog */}
+      <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <DialogContent className="max-w-xs text-center">
+          <DialogHeader>
+            <DialogTitle>Feature Unavailable</DialogTitle>
+            <DialogDescription className="pt-1">
+              Free users cannot use Ask Roz. If you need this feature, please contact the administrator.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            <Button onClick={() => setShowUpgradeDialog(false)}>Got it</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
