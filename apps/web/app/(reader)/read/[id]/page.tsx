@@ -142,17 +142,7 @@ export default function ReadPage({
         setWordMatches(null);
         setReadingResult(finalMatches);
 
-        const correct = finalMatches.filter((m) => m.status === "correct").length;
-        const total = finalMatches.length;
-        const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
-        const errors = finalMatches.filter((m) => m.status === "incorrect").map((m) => m.word);
-
-        let feedbackPrompt = `I just read a paragraph with ${accuracy}% accuracy.`;
-        if (errors.length > 0) {
-          feedbackPrompt += ` I had trouble with: ${errors.join(", ")}.`;
-        }
-        setShowChat(true);
-        handleSendMessage(feedbackPrompt);
+        // Reading result is shown inline — no need to activate Roz automatically
       },
       [paragraphs, activeParagraph]
     ),

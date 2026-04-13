@@ -20,22 +20,24 @@ async function buildContext(bookId: string, chapterId?: string) {
     .eq("id", bookId)
     .single();
 
-  const { data: chapters } = await supabase
+  // Only fetch the current chapter if chapterId is provided, otherwise fetch all
+  const query = supabase
     .from("chapters")
-    .select("title, raw_text")
+    .select("id, title, raw_text")
     .eq("book_id", bookId)
     .order("chapter_num");
+
+  if (chapterId) {
+    query.eq("id", chapterId);
+  }
+
+  const { data: chapters } = await query;
 
   const bookContent = (chapters ?? [])
     .map((ch) => `## ${ch.title}\n${ch.raw_text}`)
     .join("\n\n");
 
-  // If chapterId given, find its title
-  let chapterTitle = "All Chapters";
-  if (chapterId) {
-    const ch = (chapters ?? []).find((c) => c.title?.includes(chapterId));
-    if (ch) chapterTitle = ch.title;
-  }
+  const chapterTitle = chapters?.[0]?.title ?? "All Chapters";
 
   return buildSystemPrompt({
     bookTitle: book?.title ?? "Unknown",
@@ -51,7 +53,7 @@ export async function sendChatMessage(input: ChatInput): Promise<string> {
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
-    max_tokens: 512,
+    max_tokens: 256,
     system: systemPrompt,
     messages: [
       ...recentHistory.map((m) => ({
@@ -77,7 +79,7 @@ export async function streamChatMessage(
 
   const stream = client.messages.stream({
     model: "claude-sonnet-4-20250514",
-    max_tokens: 512,
+    max_tokens: 256,
     system: systemPrompt,
     messages: [
       ...recentHistory.map((m) => ({

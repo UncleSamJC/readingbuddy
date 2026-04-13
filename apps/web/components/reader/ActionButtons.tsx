@@ -43,7 +43,7 @@ export function ActionButtons({
       >
         <Mic className="h-4 w-4" />
         <span className="hidden xs:inline">{isRecording ? "Stop" : "Read Aloud"}</span>
-        <span className="xs:hidden">{isRecording ? "Stop" : "Read"}</span>
+        <span className="xs:hidden">{isRecording ? "Stop" : "Read Aloud"}</span>
       </Button>
 
       {/* TTS area — remaining 70% */}
