@@ -121,18 +121,20 @@
   * {
     @apply border-border outline-ring/50;
     }
+  html {
+    @apply font-sans;
+    height: 100%;
+    overflow: hidden;
+    background-color: oklch(1 0 0); /* --card: white, fills status bar safe area */
+    }
   body {
     @apply bg-background text-foreground;
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    height: 100%;
+    overflow: hidden;
     -webkit-tap-highlight-color: transparent;
-    overscroll-behavior: none;
     }
   @media (min-width: 640px) {
     :root { --navbar-h: 3.5rem; } /* h-14 on sm+ */
-    }
-  html {
-    @apply font-sans;
-    background-color: oklch(1 0 0); /* --card: white, fills status bar safe area */
     }
   /* Larger touch targets for children */
   button, a, [role="button"] {

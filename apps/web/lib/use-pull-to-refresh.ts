@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const THRESHOLD = 80; // px to pull before triggering refresh
+const THRESHOLD = 80;
 
 export function usePullToRefresh(onRefresh: () => Promise<void>) {
   const [pullDistance, setPullDistance] = useState(0);
@@ -9,8 +9,11 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
   const isPullingRef = useRef(false);
 
   useEffect(() => {
+    const getScrollTop = () =>
+      document.getElementById("main-scroll")?.scrollTop ?? 0;
+
     const onTouchStart = (e: TouchEvent) => {
-      if (window.scrollY === 0) {
+      if (getScrollTop() === 0) {
         startYRef.current = e.touches[0].clientY;
         isPullingRef.current = true;
       }
@@ -18,14 +21,13 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
 
     const onTouchMove = (e: TouchEvent) => {
       if (!isPullingRef.current || startYRef.current === null || isRefreshing) return;
-      if (window.scrollY > 0) {
+      if (getScrollTop() > 0) {
         isPullingRef.current = false;
         setPullDistance(0);
         return;
       }
       const delta = e.touches[0].clientY - startYRef.current;
       if (delta > 0) {
-        // Dampen the pull so it feels springy
         setPullDistance(Math.min(delta * 0.4, THRESHOLD));
       }
     };

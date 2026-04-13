@@ -21,7 +21,7 @@ export default function StudentLayout({
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
       </div>
     );
@@ -32,11 +32,18 @@ export default function StudentLayout({
   return (
     <>
       <Navbar />
+      {/* Scroll container — body is overflow:hidden so bounce comes from here, not WKWebView */}
       <div
-        className="mx-auto max-w-4xl px-3 pb-4 sm:px-4 sm:pb-6"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + var(--navbar-h) + 1rem)' }}
+        id="main-scroll"
+        className="h-full overflow-y-auto overscroll-none"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + var(--navbar-h))' }}
       >
-        {children}
+        <div
+          className="mx-auto max-w-4xl px-3 py-4 sm:px-4 sm:py-6"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}
+        >
+          {children}
+        </div>
       </div>
     </>
   );
