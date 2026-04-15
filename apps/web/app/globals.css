@@ -136,6 +136,10 @@
   @media (min-width: 640px) {
     :root { --navbar-h: 3.5rem; } /* h-14 on sm+ */
     }
+  /* Main scroll container — use CSS (not inline style) so env() resolves correctly on iOS/WKWebView */
+  #main-scroll {
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--navbar-h));
+    }
   /* Larger touch targets for children */
   button, a, [role="button"] {
     min-height: 44px;

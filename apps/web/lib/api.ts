@@ -18,17 +18,22 @@ export async function apiFetch<T>(
   options?: RequestInit
 ): Promise<T> {
   const authHeaders = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeaders,
-      ...options?.headers,
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders,
+        ...options?.headers,
+      },
+    });
+  } catch {
+    throw new Error("Cannot connect to server. Please check your internet connection and try again.");
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `API error ${res.status}`);
+    throw new Error(body.error || `Server error (${res.status}). Please try again.`);
   }
   return res.json();
 }
@@ -233,4 +238,9 @@ export async function updateReadingProgress(chapterId: string, lastParagraph: nu
     method: "PUT",
     body: JSON.stringify({ chapter_id: chapterId, last_paragraph: lastParagraph }),
   });
+}
+
+
+export async function deleteAccount(): Promise<void> {
+  return apiFetch("/api/user/account", { method: "DELETE" });
 }

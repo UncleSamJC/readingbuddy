@@ -61,13 +61,18 @@ export default function PrivacyPage() {
         <p className="mb-3">We use the following third-party services to operate the app:</p>
         <ul className="list-disc pl-6 space-y-2">
           <li>
-            <strong>Supabase</strong> — user authentication and database storage.
+            <strong>Supabase</strong> — user authentication and database storage. Stores account
+            email, book content, vocabulary, chat history, and reading progress.
           </li>
           <li>
-            <strong>Anthropic (Claude API)</strong> — AI responses for the reading tutor.
+            <strong>Anthropic, Inc. (Claude API)</strong> — AI tutor responses. We send the book
+            content you have entered and your chat messages with Roz to generate tutor replies.
+            Anthropic does not use API data to train its models.
           </li>
           <li>
-            <strong>OpenAI (TTS API)</strong> — text-to-speech audio generation.
+            <strong>OpenAI (TTS API)</strong> — text-to-speech audio generation. We send only the
+            sentence text to be read aloud. No account information or personal data is included.
+            OpenAI does not use API data to train its models.
           </li>
           <li>
             <strong>Vercel</strong> — web application hosting.
@@ -120,9 +125,9 @@ export default function PrivacyPage() {
         <h2 className="text-xl font-semibold mb-3">6. Data Retention and Deletion</h2>
         <p className="mb-3">
           Your account data (books, vocabulary, chat history) is retained as long as your account
-          is active. You may request deletion of your account and all associated data at any time
-          by contacting us at the email below. We will delete your data within 30 days of your
-          request.
+          is active. You may delete your account and all associated data at any time directly within
+          the app by going to <strong>Settings → Delete Account</strong>. Deletion is immediate and
+          permanent. If you encounter any issues, you may also contact us at the email below.
         </p>
       </section>
 

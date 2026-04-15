@@ -8,6 +8,7 @@ dist/
 *.tsbuildinfo
 package-lock.json
 *.txt
+*.CLAUDE.*
 
 # Sensitive files
 docs/supabase_info.txt

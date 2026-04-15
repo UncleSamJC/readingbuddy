@@ -1,10 +1,21 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAppStore, TTS_VOICES, TTS_SPEED_OPTIONS, type TtsVoiceId } from "@/lib/store";
-import { fetchTtsAudio } from "@/lib/api";
+import { fetchTtsAudio, deleteAccount } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Volume2, Check, Crown } from "lucide-react";
 import { PLAN_CHAPTER_LIMITS, type UserPlan } from "@readbuddy/shared-types";
@@ -18,6 +29,7 @@ const PLANS: { id: UserPlan; label: string; color: string }[] = [
 const PREVIEW_TEXT = "Hello! I am Roz, your reading teacher. Let's read together!";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const ttsVoice = useAppStore((s) => s.ttsVoice);
   const ttsSpeed = useAppStore((s) => s.ttsSpeed);
   const userPlan = useAppStore((s) => s.userPlan);
@@ -26,6 +38,27 @@ export default function SettingsPage() {
 
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const canConfirmDelete = deleteConfirmText.trim().toUpperCase() === "DELETE";
+
+  async function handleDeleteAccount() {
+    if (!canConfirmDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount();
+      await supabase.auth.signOut();
+      router.replace("/login");
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete account. Please try again.");
+      setIsDeleting(false);
+    }
+  }
 
   const handlePreview = useCallback(async (voiceId: string) => {
     // Stop current preview
@@ -165,6 +198,72 @@ export default function SettingsPage() {
           })}
         </CardContent>
       </Card>
+
+      {/* Account */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Account</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              setDeleteConfirmText("");
+              setDeleteError(null);
+              setShowDeleteDialog(true);
+            }}
+          >
+            Delete Account
+          </Button>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Permanently deletes your account and all associated data. This action cannot be undone.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={(open) => { if (!isDeleting) setShowDeleteDialog(open); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Account</DialogTitle>
+            <DialogDescription>
+              This will permanently delete your account, all books, chapters, and learning data. This action{" "}
+              <span className="font-semibold text-destructive">cannot be undone</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              Type <span className="font-mono font-semibold">DELETE</span> to confirm:
+            </p>
+            <Input
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE"
+              disabled={isDeleting}
+              autoCapitalize="characters"
+            />
+            {deleteError && (
+              <p className="text-sm font-medium text-destructive">{deleteError}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={!canConfirmDelete || isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete My Account"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Speed selection */}
       <Card>

@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+const PRIVACY_URL = "https://readingbuddy-web.vercel.app/privacy";
+
 type Mode = "login" | "register";
 
 export default function LoginPage() {
@@ -16,6 +18,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -71,11 +74,39 @@ export default function LoginPage() {
               />
             </div>
 
+            {mode === "register" && (
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+                />
+                <span className="text-sm text-muted-foreground">
+                  I agree to the{" "}
+                  <a
+                    href={PRIVACY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-primary underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Privacy Policy & Terms of Service
+                  </a>
+                  , including the use of AI services (Anthropic, OpenAI) to power reading features.
+                </span>
+              </label>
+            )}
+
             {error && (
               <p className="text-sm font-medium text-destructive">{error}</p>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading || (mode === "register" && !agreedToTerms)}
+            >
               {isLoading
                 ? "Please wait..."
                 : mode === "login"
@@ -89,7 +120,7 @@ export default function LoginPage() {
               <>
                 Don&apos;t have an account?{" "}
                 <button
-                  onClick={() => { setMode("register"); setError(null); }}
+                  onClick={() => { setMode("register"); setError(null); setAgreedToTerms(false); }}
                   className="font-medium text-primary hover:underline"
                 >
                   Sign up

@@ -90,6 +90,41 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
     return reply.status(204).send();
   });
 
+  // ── Account Deletion ──
+
+  // DELETE /api/user/account
+  app.delete("/account", async (request, reply) => {
+    const userId = (request as any).userId;
+
+    // 1. Fetch user email for audit log
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+    if (userError || !userData?.user) {
+      return reply.status(404).send({ error: "User not found" });
+    }
+    const email = userData.user.email ?? null;
+
+    // 2. Fetch books snapshot for audit log
+    const { data: books } = await supabase
+      .from("books")
+      .select("id, title, author, created_at")
+      .eq("owner_id", userId);
+
+    // 3. Write audit record BEFORE deleting (cascade will wipe business data)
+    await supabase.from("user_history_audit").insert({
+      user_id: userId,
+      email,
+      books_json: books ?? [],
+    });
+
+    // 4. Delete auth user — cascade handles all business data cleanup
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
+    if (deleteError) {
+      return reply.status(500).send({ error: "Failed to delete account. Please try again." });
+    }
+
+    return reply.status(204).send();
+  });
+
   // ── Reading Progress ──
 
   // GET /api/user/progress

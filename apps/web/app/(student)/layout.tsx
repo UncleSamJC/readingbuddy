@@ -36,7 +36,6 @@ export default function StudentLayout({
       <div
         id="main-scroll"
         className="h-full overflow-y-auto overscroll-none"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + var(--navbar-h))' }}
       >
         <div
           className="mx-auto max-w-4xl px-3 py-4 sm:px-4 sm:py-6"
