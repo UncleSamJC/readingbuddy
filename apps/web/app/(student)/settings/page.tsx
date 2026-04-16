@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAppStore, TTS_VOICES, TTS_SPEED_OPTIONS, type TtsVoiceId } from "@/lib/store";
+import { useAppStore, TTS_VOICES, TTS_SPEED_OPTIONS, ROZ_LANGUAGES, type TtsVoiceId, type RozLanguage } from "@/lib/store";
 import { fetchTtsAudio, deleteAccount } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,8 +33,10 @@ export default function SettingsPage() {
   const ttsVoice = useAppStore((s) => s.ttsVoice);
   const ttsSpeed = useAppStore((s) => s.ttsSpeed);
   const userPlan = useAppStore((s) => s.userPlan);
+  const rozLanguage = useAppStore((s) => s.rozLanguage);
   const setTtsVoice = useAppStore((s) => s.setTtsVoice);
   const setTtsSpeed = useAppStore((s) => s.setTtsSpeed);
+  const setRozLanguage = useAppStore((s) => s.setRozLanguage);
 
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -199,28 +201,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Account */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Account</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button
-            variant="destructive"
-            onClick={() => {
-              setDeleteConfirmText("");
-              setDeleteError(null);
-              setShowDeleteDialog(true);
-            }}
-          >
-            Delete Account
-          </Button>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Permanently deletes your account and all associated data. This action cannot be undone.
-          </p>
-        </CardContent>
-      </Card>
-
       {/* Delete confirmation dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={(open) => { if (!isDeleting) setShowDeleteDialog(open); }}>
         <DialogContent>
@@ -265,33 +245,76 @@ export default function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Speed selection */}
+      {/* Reading card: language + speed */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Reading Speed</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Adjust how fast the voice reads.
-          </p>
+          <CardTitle className="text-lg">Reading</CardTitle>
         </CardHeader>
-        <CardContent className="flex gap-2">
-          {TTS_SPEED_OPTIONS.map((opt) => {
-            const isSelected = ttsSpeed === opt.value;
-            return (
-              <button
-                key={opt.value}
-                onClick={() => setTtsSpeed(opt.value)}
-                className={cn(
-                  "flex-1 rounded-lg border px-3 py-3 text-center text-sm font-medium transition-colors",
-                  isSelected
-                    ? "border-primary bg-primary/5 text-primary"
-                    : "border-border hover:bg-muted"
-                )}
-              >
-                {opt.label}
-                <p className="mt-0.5 text-xs text-muted-foreground">{opt.value}x</p>
-              </button>
-            );
-          })}
+        <CardContent className="space-y-5">
+          {/* Language selector */}
+          <div>
+            <p className="mb-2 text-sm font-medium">
+              Teacher Roz will explain and answer questions in
+            </p>
+            <select
+              value={rozLanguage}
+              onChange={(e) => setRozLanguage(e.target.value as RozLanguage)}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {ROZ_LANGUAGES.map((lang) => (
+                <option key={lang.value} value={lang.value}>
+                  {lang.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Speed */}
+          <div>
+            <p className="mb-2 text-sm font-medium">Reading speed</p>
+            <div className="flex gap-2">
+              {TTS_SPEED_OPTIONS.map((opt) => {
+                const isSelected = ttsSpeed === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => setTtsSpeed(opt.value)}
+                    className={cn(
+                      "flex-1 rounded-lg border px-3 py-3 text-center text-sm font-medium transition-colors",
+                      isSelected
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border hover:bg-muted"
+                    )}
+                  >
+                    {opt.label}
+                    <p className="mt-0.5 text-xs text-muted-foreground">{opt.value}x</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Account — always last */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Account</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              setDeleteConfirmText("");
+              setDeleteError(null);
+              setShowDeleteDialog(true);
+            }}
+          >
+            Delete Account
+          </Button>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Permanently deletes your account and all associated data. This action cannot be undone.
+          </p>
         </CardContent>
       </Card>
     </div>

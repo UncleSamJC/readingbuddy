@@ -78,12 +78,24 @@ export const TTS_SPEED_OPTIONS = [
   { value: 1.15, label: "Fast" },
 ] as const;
 
+export const ROZ_LANGUAGES = [
+  { value: "English",      label: "English" },
+  { value: "中文（简体）",  label: "中文（简体）" },
+  { value: "中文（繁體）",  label: "中文（繁體）" },
+  { value: "日本語",        label: "日本語" },
+  { value: "한국어",        label: "한국어" },
+] as const;
+
+export type RozLanguage = typeof ROZ_LANGUAGES[number]["value"];
+
 interface SettingsState {
   ttsVoice: TtsVoiceId;
   ttsSpeed: number;
   userPlan: UserPlan;
+  rozLanguage: RozLanguage;
   setTtsVoice: (voice: TtsVoiceId) => void;
   setTtsSpeed: (speed: number) => void;
+  setRozLanguage: (language: RozLanguage) => void;
 }
 
 type AppState = BookState & ReadingState & ChatState & SettingsState;
@@ -171,6 +183,7 @@ export const useAppStore = create<AppState>()(
               ttsVoice: (settings.tts_voice || "shimmer") as TtsVoiceId,
               ttsSpeed: settings.tts_speed || 0.85,
               userPlan: (settings.plan as UserPlan) || "Free",
+              rozLanguage: (settings.roz_language || "English") as RozLanguage,
             });
           }
 
@@ -223,7 +236,19 @@ export const useAppStore = create<AppState>()(
 
       setBookAuthor: (author) => {
         set((state) => {
-          if (!state.currentBook) return state;
+          if (!state.currentBook) {
+            // Book not created yet — store author in placeholder so it's included on creation
+            return {
+              currentBook: {
+                id: "",
+                owner_id: "local",
+                title: "",
+                author,
+                is_active: true,
+                created_at: new Date().toISOString(),
+              },
+            };
+          }
           if (state.currentBook.id) debouncedBookSync(state.currentBook.id, { author });
           return { currentBook: { ...state.currentBook, author } };
         });
@@ -254,6 +279,7 @@ export const useAppStore = create<AppState>()(
                 id: book.id,
                 owner_id: "local",
                 title: book.title,
+                author: bookAuthor,
                 is_active: true,
                 created_at: "",
               },
@@ -399,6 +425,7 @@ export const useAppStore = create<AppState>()(
       ttsVoice: "shimmer",
       ttsSpeed: 0.85,
       userPlan: "Free" as UserPlan,
+      rozLanguage: "English" as RozLanguage,
       setTtsVoice: (voice) => {
         set({ ttsVoice: voice });
         api.updateUserSettings({ tts_voice: voice }).catch(() => {});
@@ -406,6 +433,10 @@ export const useAppStore = create<AppState>()(
       setTtsSpeed: (speed) => {
         set({ ttsSpeed: speed });
         api.updateUserSettings({ tts_speed: speed }).catch(() => {});
+      },
+      setRozLanguage: (language) => {
+        set({ rozLanguage: language });
+        api.updateUserSettings({ roz_language: language }).catch(() => {});
       },
     }),
     {
@@ -418,6 +449,7 @@ export const useAppStore = create<AppState>()(
         ttsVoice: state.ttsVoice,
         ttsSpeed: state.ttsSpeed,
         userPlan: state.userPlan,
+        rozLanguage: state.rozLanguage,
       }),
     }
   )

@@ -22,10 +22,10 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
 
   // PUT /api/user/settings
   app.put<{
-    Body: { tts_voice?: string; tts_speed?: number; plan?: unknown };
+    Body: { tts_voice?: string; tts_speed?: number; roz_language?: string; plan?: unknown };
   }>("/settings", async (request, reply) => {
     const userId = (request as any).userId;
-    const { tts_voice, tts_speed } = request.body;
+    const { tts_voice, tts_speed, roz_language } = request.body;
     // `plan` is intentionally excluded — only admins can change it via DB
 
     const { data, error } = await supabase
@@ -34,6 +34,7 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
         user_id: userId,
         ...(tts_voice !== undefined && { tts_voice }),
         ...(tts_speed !== undefined && { tts_speed }),
+        ...(roz_language !== undefined && { roz_language }),
         updated_at: new Date().toISOString(),
       })
       .select()

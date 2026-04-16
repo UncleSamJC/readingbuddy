@@ -51,6 +51,7 @@ export default function ReadPage({
   const ttsVoice = useAppStore((s) => s.ttsVoice);
   const ttsSpeed = useAppStore((s) => s.ttsSpeed);
   const userPlan = useAppStore((s) => s.userPlan);
+  const rozLanguage = useAppStore((s) => s.rozLanguage);
 
   // Local state
   const [activeParagraph, setActiveParagraph] = useState(0);
@@ -201,10 +202,11 @@ export default function ReadPage({
           setIsAiLoading(false);
           cancelStreamRef.current = null;
         },
-        chapter?.id
+        chapter?.id,
+        rozLanguage
       );
     },
-    [addMessage, updateMessageContent, setStreamingMessageId, setIsAiLoading, currentBook?.id, chapter?.id]
+    [addMessage, updateMessageContent, setStreamingMessageId, setIsAiLoading, currentBook?.id, chapter?.id, rozLanguage]
   );
 
   // ── TTS (sentence-by-sentence with pre-fetching) ──

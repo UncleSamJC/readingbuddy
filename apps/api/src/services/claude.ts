@@ -11,9 +11,10 @@ interface ChatInput {
   bookId: string;
   chapterId?: string;
   history: { role: string; content: string }[];
+  language?: string;
 }
 
-async function buildContext(bookId: string, chapterId?: string) {
+async function buildContext(bookId: string, chapterId?: string, language?: string) {
   const { data: book } = await supabase
     .from("books")
     .select("title, author")
@@ -43,12 +44,13 @@ async function buildContext(bookId: string, chapterId?: string) {
     bookTitle: book?.title ?? "Unknown",
     chapterTitle,
     bookContent,
+    language,
   });
 }
 
 /** Non-streaming: returns full response text */
 export async function sendChatMessage(input: ChatInput): Promise<string> {
-  const systemPrompt = await buildContext(input.bookId, input.chapterId);
+  const systemPrompt = await buildContext(input.bookId, input.chapterId, input.language);
   const recentHistory = input.history.slice(-MAX_HISTORY_TURNS * 2);
 
   const response = await client.messages.create({
@@ -74,7 +76,7 @@ export async function streamChatMessage(
   onChunk: (text: string) => void,
   onDone: () => void
 ): Promise<void> {
-  const systemPrompt = await buildContext(input.bookId, input.chapterId);
+  const systemPrompt = await buildContext(input.bookId, input.chapterId, input.language);
   const recentHistory = input.history.slice(-MAX_HISTORY_TURNS * 2);
 
   const stream = client.messages.stream({

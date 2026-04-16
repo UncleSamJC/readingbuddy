@@ -118,7 +118,8 @@ export function streamChat(
   history: { role: string; content: string }[],
   onChunk: (text: string) => void,
   onDone: () => void,
-  chapterId?: string
+  chapterId?: string,
+  language?: string
 ): () => void {
   const controller = new AbortController();
 
@@ -128,7 +129,7 @@ export function streamChat(
       const res = await fetch(`${API_BASE}/api/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
-        body: JSON.stringify({ message, bookId, chapterId, history }),
+        body: JSON.stringify({ message, bookId, chapterId, history, language }),
         signal: controller.signal,
       });
 

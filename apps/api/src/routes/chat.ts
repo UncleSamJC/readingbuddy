@@ -9,15 +9,17 @@ export const chatRoutes: FastifyPluginAsync = async (app) => {
       bookId: string;
       chapterId?: string;
       history?: { role: string; content: string }[];
+      language?: string;
     };
   }>("/", async (request, reply) => {
-    const { message, bookId, chapterId, history } = request.body;
+    const { message, bookId, chapterId, history, language } = request.body;
 
     const response = await sendChatMessage({
       message,
       bookId,
       chapterId,
       history: history ?? [],
+      language,
     });
 
     return reply.send({ reply: response });
@@ -30,9 +32,10 @@ export const chatRoutes: FastifyPluginAsync = async (app) => {
       bookId: string;
       chapterId?: string;
       history?: { role: string; content: string }[];
+      language?: string;
     };
   }>("/stream", async (request, reply) => {
-    const { message, bookId, chapterId, history } = request.body;
+    const { message, bookId, chapterId, history, language } = request.body;
 
     const origin = request.headers.origin || process.env.FRONTEND_URL || "http://localhost:3000";
     reply.raw.writeHead(200, {
@@ -44,7 +47,7 @@ export const chatRoutes: FastifyPluginAsync = async (app) => {
     });
 
     await streamChatMessage(
-      { message, bookId, chapterId, history: history ?? [] },
+      { message, bookId, chapterId, history: history ?? [], language },
       (text) => {
         reply.raw.write(`data: ${JSON.stringify({ text })}\n\n`);
       },
