@@ -548,11 +548,11 @@ export default function ReadPage({
       {!showChat && (
         <button
           onClick={() => {
-            if (userPlan === "Free") {
-              setShowUpgradeDialog(true);
-            } else {
-              setShowChat(true);
-            }
+            // if (userPlan === "Free") {
+            //   setShowUpgradeDialog(true);
+            // } else {
+            setShowChat(true);
+            // }
           }}
           className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg hover:bg-primary/90 active:scale-95 transition-transform"
         >
