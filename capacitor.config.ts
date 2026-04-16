@@ -9,7 +9,13 @@ const config: CapacitorConfig = {
     cleartext: false,
   },
   ios: {
-    contentInset: 'automatic',
+    contentInset: 'never',
+  },
+  plugins: {
+    Keyboard: {
+      resize: 'none',
+      resizeOnFullScreen: true,
+    },
   },
 };
 
