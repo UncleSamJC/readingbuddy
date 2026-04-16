@@ -56,9 +56,9 @@ export default function HomePage() {
   if (!hasBook) {
     return (
       <main className="flex flex-col items-center pt-16">
-        <h1 className="mb-3 text-4xl font-bold text-primary">ReadingBuddy</h1>
+        <h1 className="mb-3 text-4xl font-bold text-primary">Hi, I'm teacher Roz</h1>
         <p className="mb-10 max-w-sm text-center text-lg text-muted-foreground">
-          Your AI reading tutor. Paste a book chapter and start learning with teacher Roz!
+          Your AI reading tutor. Paste a book chapter and start learning with me!
         </p>
         <Link href="/books/setup">
           <Button size="lg" className="gap-2 px-8 text-lg">
