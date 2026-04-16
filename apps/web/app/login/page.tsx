@@ -91,7 +91,7 @@ export default function LoginPage() {
                     className="font-medium text-primary underline"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    Privacy Policy & Terms of Service
+                    Privacy Policy
                   </a>
                   , including the use of AI services (Anthropic, OpenAI) to power reading features.
                 </span>

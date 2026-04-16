@@ -23,7 +23,7 @@ export async function apiFetch<T>(
     res = await fetch(`${API_BASE}${path}`, {
       ...options,
       headers: {
-        "Content-Type": "application/json",
+        ...(options?.body !== undefined && { "Content-Type": "application/json" }),
         ...authHeaders,
         ...options?.headers,
       },
@@ -35,6 +35,7 @@ export async function apiFetch<T>(
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || `Server error (${res.status}). Please try again.`);
   }
+  if (res.status === 204) return undefined as T;
   return res.json();
 }
 
