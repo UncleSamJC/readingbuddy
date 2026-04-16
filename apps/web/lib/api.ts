@@ -198,10 +198,10 @@ export async function fetchTtsAudio(
 // ── User Settings ──
 
 export async function getUserSettings() {
-  return apiFetch<{ tts_voice: string; tts_speed: number; plan: string }>("/api/user/settings");
+  return apiFetch<{ tts_voice: string; tts_speed: number; plan: string; roz_language: string }>("/api/user/settings");
 }
 
-export async function updateUserSettings(settings: { tts_voice?: string; tts_speed?: number }) {
+export async function updateUserSettings(settings: { tts_voice?: string; tts_speed?: number; roz_language?: string }) {
   return apiFetch("/api/user/settings", {
     method: "PUT",
     body: JSON.stringify(settings),
