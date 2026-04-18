@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Navbar } from "@/components/Navbar";
+import { AIConsentDialog } from "@/components/AIConsentDialog";
 
 export default function StudentLayout({
   children,
@@ -32,6 +33,7 @@ export default function StudentLayout({
   return (
     <>
       <Navbar />
+      <AIConsentDialog />
       {/* Scroll container — body is overflow:hidden so bounce comes from here, not WKWebView */}
       <div
         id="main-scroll"
