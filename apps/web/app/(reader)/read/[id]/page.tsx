@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Highlighter, BotMessageSquare, Home } from "lucide-react";
 import type { ChatMessage } from "@readbuddy/shared-types";
+import { useAuth } from "@/lib/auth-context";
+import { ConsentDialog, chatConsentKey } from "@/components/AIConsentDialog";
 
 function splitParagraphs(text: string): string[] {
   return text
@@ -54,9 +56,11 @@ export default function ReadPage({
   const rozLanguage = useAppStore((s) => s.rozLanguage);
 
   // Local state
+  const { user } = useAuth();
   const [activeParagraph, setActiveParagraph] = useState(0);
   const [isMarkingMode, setIsMarkingMode] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [showChatConsent, setShowChatConsent] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [wordMatches, setWordMatches] = useState<WordMatch[] | null>(null);
   const [readingResult, setReadingResult] = useState<WordMatch[] | null>(null);
@@ -546,15 +550,28 @@ export default function ReadPage({
         ttsState={ttsState}
       />
 
+      {/* Chat consent dialog */}
+      <ConsentDialog
+        open={showChatConsent}
+        title="Before continuing"
+        description="Your message and book content will be sent to Anthropic (Claude AI) to generate Roz's response. No personal or contact information is shared."
+        onAgree={() => {
+          if (user) localStorage.setItem(chatConsentKey(user.id), "true");
+          setShowChatConsent(false);
+          setShowChat(true);
+        }}
+        onCancel={() => setShowChatConsent(false)}
+      />
+
       {/* Floating Ask Roz button */}
       {!showChat && (
         <button
           onClick={() => {
-            // if (userPlan === "Free") {
-            //   setShowUpgradeDialog(true);
-            // } else {
-            setShowChat(true);
-            // }
+            if (user && localStorage.getItem(chatConsentKey(user.id))) {
+              setShowChat(true);
+            } else {
+              setShowChatConsent(true);
+            }
           }}
           className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg hover:bg-primary/90 active:scale-95 transition-transform"
         >
