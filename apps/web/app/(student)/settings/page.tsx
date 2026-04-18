@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAppStore, TTS_VOICES, TTS_SPEED_OPTIONS, ROZ_LANGUAGES, type TtsVoiceId, type RozLanguage } from "@/lib/store";
 import { fetchTtsAudio, deleteAccount } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ const PREVIEW_TEXT = "Hello! I am Roz, your reading teacher. Let's read together
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const ttsVoice = useAppStore((s) => s.ttsVoice);
   const ttsSpeed = useAppStore((s) => s.ttsSpeed);
   const userPlan = useAppStore((s) => s.userPlan);
@@ -54,6 +56,9 @@ export default function SettingsPage() {
     setDeleteError(null);
     try {
       await deleteAccount();
+      if (user?.id) {
+        localStorage.removeItem(`ai_data_consent_v1_${user.id}`);
+      }
       await supabase.auth.signOut();
       router.replace("/login");
     } catch (err) {

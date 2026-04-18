@@ -9,20 +9,24 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
 
-const CONSENT_KEY = "ai_data_consent_v1";
+const consentKey = (userId: string) => `ai_data_consent_v1_${userId}`;
 
 export function AIConsentDialog() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem(CONSENT_KEY)) {
+    if (!user) return;
+    if (!localStorage.getItem(consentKey(user.id))) {
       setOpen(true);
     }
-  }, []);
+  }, [user]);
 
   function handleAgree() {
-    localStorage.setItem(CONSENT_KEY, "true");
+    if (!user) return;
+    localStorage.setItem(consentKey(user.id), "true");
     setOpen(false);
   }
 
