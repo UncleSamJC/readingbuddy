@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
+import { ConsentDialog, chatConsentKey } from "@/components/AIConsentDialog";
 
 interface ChatPanelProps {
   messages: ChatMessage[];
@@ -41,7 +43,10 @@ export function ChatPanel({
   streamingMessageId,
   onClose,
 }: ChatPanelProps) {
+  const { user } = useAuth();
   const [input, setInput] = useState("");
+  const [showConsent, setShowConsent] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -52,75 +57,104 @@ export function ChatPanel({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
-    onSendMessage(input.trim());
+    if (!input.trim() || isLoading || !user) return;
+    if (localStorage.getItem(chatConsentKey(user.id))) {
+      onSendMessage(input.trim());
+      setInput("");
+    } else {
+      setPendingMessage(input.trim());
+      setShowConsent(true);
+    }
+  }
+
+  function handleAgree() {
+    if (!user) return;
+    localStorage.setItem(chatConsentKey(user.id), "true");
+    setShowConsent(false);
+    onSendMessage(pendingMessage);
     setInput("");
+    setPendingMessage("");
+  }
+
+  function handleCancel() {
+    setShowConsent(false);
+    setPendingMessage("");
   }
 
   return (
-    <div className={cn(
-      "fixed bottom-4 right-4 z-50 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl",
-      "w-[calc(100vw-2rem)] sm:w-80",
-      "h-[350px] sm:h-110"
-    )}>
-      {/* Top bar: welcome text + close button */}
-      <div className="flex items-center gap-2 px-4 pt-3 pb-1 shrink-0">
-        {messages.length === 0 && !isLoading ? (
-          <p className="flex-1 text-center text-sm text-muted-foreground">
-            Hi! I&apos;m Roz. Click a sentence or ask me anything about the book!
-          </p>
-        ) : (
-          <div className="flex-1" />
-        )}
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="shrink-0 rounded-full p-1 text-primary hover:text-primary/70"
-            title="Close"
-          >
-            <X className="h-5 w-5" strokeWidth={2.5} />
-          </button>
-        )}
-      </div>
+    <>
+      <ConsentDialog
+        open={showConsent}
+        title="Before continuing"
+        description="Your message and book content will be sent to Anthropic (Claude AI) to generate Roz's response. No personal or contact information is shared."
+        onAgree={handleAgree}
+        onCancel={handleCancel}
+      />
 
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto px-4 pb-4">
-        {messages.map((msg) => (
-          <MessageBubble
-            key={msg.id}
-            msg={msg}
-            isStreaming={msg.id === streamingMessageId}
+      <div className={cn(
+        "fixed bottom-4 right-4 z-50 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl",
+        "w-[calc(100vw-2rem)] sm:w-80",
+        "h-[350px] sm:h-110"
+      )}>
+        {/* Top bar: welcome text + close button */}
+        <div className="flex items-center gap-2 px-4 pt-3 pb-1 shrink-0">
+          {messages.length === 0 && !isLoading ? (
+            <p className="flex-1 text-center text-sm text-muted-foreground">
+              Hi! I&apos;m Roz. Click a sentence or ask me anything about the book!
+            </p>
+          ) : (
+            <div className="flex-1" />
+          )}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="shrink-0 rounded-full p-1 text-primary hover:text-primary/70"
+              title="Close"
+            >
+              <X className="h-5 w-5" strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
+
+        {/* Messages */}
+        <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto px-4 pb-4">
+          {messages.map((msg) => (
+            <MessageBubble
+              key={msg.id}
+              msg={msg}
+              isStreaming={msg.id === streamingMessageId}
+            />
+          ))}
+          {isLoading && !streamingMessageId && (
+            <div className="max-w-[85%] rounded-xl bg-secondary px-4 py-2.5 text-sm text-muted-foreground">
+              <span className="inline-flex gap-1">
+                <span className="animate-bounce">.</span>
+                <span className="animate-bounce" style={{ animationDelay: "0.15s" }}>.</span>
+                <span className="animate-bounce" style={{ animationDelay: "0.3s" }}>.</span>
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Input */}
+        <form onSubmit={handleSubmit} className="flex gap-2 border-t border-border p-2.5 sm:p-3">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask Roz..."
+            disabled={isLoading}
+            className="flex-1 text-base sm:text-sm"
           />
-        ))}
-        {isLoading && !streamingMessageId && (
-          <div className="max-w-[85%] rounded-xl bg-secondary px-4 py-2.5 text-sm text-muted-foreground">
-            <span className="inline-flex gap-1">
-              <span className="animate-bounce">.</span>
-              <span className="animate-bounce" style={{ animationDelay: "0.15s" }}>.</span>
-              <span className="animate-bounce" style={{ animationDelay: "0.3s" }}>.</span>
-            </span>
-          </div>
-        )}
+          <Button
+            type="submit"
+            size="icon"
+            disabled={isLoading || !input.trim()}
+            className="h-10 w-10 shrink-0"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </form>
       </div>
-
-      {/* Input */}
-      <form onSubmit={handleSubmit} className="flex gap-2 border-t border-border p-2.5 sm:p-3">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask Roz..."
-          disabled={isLoading}
-          className="flex-1 text-base sm:text-sm"
-        />
-        <Button
-          type="submit"
-          size="icon"
-          disabled={isLoading || !input.trim()}
-          className="h-10 w-10 shrink-0"
-        >
-          <Send className="h-4 w-4" />
-        </Button>
-      </form>
-    </div>
+    </>
   );
 }
