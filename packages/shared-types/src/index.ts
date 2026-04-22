@@ -114,16 +114,16 @@ export const MAX_WORDS_PER_CHAPTER = 3000;
 
 // ── User Plan ──
 
-export type UserPlan = "Free" | "Basic" | "Pro";
+export type UserPlan = "Free" | "Plus" | "Pro";
 
 export const PLAN_CHAPTER_LIMITS: Record<UserPlan, number> = {
   Free: 5,
-  Basic: 60,
+  Plus: 60,
   Pro: 120,
 };
 
 export const PLAN_LABELS: Record<UserPlan, string> = {
   Free: "Free",
-  Basic: "Basic",
+  Plus: "Plus",
   Pro: "Pro",
 };

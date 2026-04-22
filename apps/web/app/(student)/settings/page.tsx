@@ -21,11 +21,11 @@ import { cn } from "@/lib/utils";
 import { Volume2, Check, Crown } from "lucide-react";
 import { PLAN_CHAPTER_LIMITS, type UserPlan } from "@readbuddy/shared-types";
 
-const PLANS: { id: UserPlan; label: string; color: string }[] = [
-  { id: "Free",  label: "Free",  color: "text-muted-foreground" },
-  { id: "Basic", label: "Basic", color: "text-blue-600" },
-  { id: "Pro",   label: "Pro",   color: "text-amber-500" },
-];
+const PLAN_COLOR: Record<UserPlan, string> = {
+  Free: "text-muted-foreground",
+  Plus: "text-blue-600",
+  Pro:  "text-amber-500",
+};
 
 const PREVIEW_TEXT = "Hello! I am Roz, your reading teacher. Let's read together!";
 
@@ -98,57 +98,22 @@ export default function SettingsPage() {
             <Crown className="h-5 w-5 text-amber-500" />
             Your Plan
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Current plan:{" "}
-            <span className={cn("font-semibold", PLANS.find((p) => p.id === userPlan)?.color)}>
-              {userPlan}
-            </span>
-          </p>
         </CardHeader>
         <CardContent>
-          {/* Three-column comparison */}
-          <div className="grid grid-cols-3 gap-2">
-            {PLANS.map((plan) => {
-              const isCurrent = plan.id === userPlan;
-              return (
-                <div
-                  key={plan.id}
-                  className={cn(
-                    "flex flex-col items-center gap-2 rounded-xl border px-3 py-4 text-center transition-colors",
-                    isCurrent
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-muted/30"
-                  )}
-                >
-                  {/* Plan name */}
-                  <span className={cn("text-sm font-bold", isCurrent ? "text-primary" : plan.color)}>
-                    {plan.label}
-                  </span>
-
-                  {/* Chapter limit */}
-                  <div>
-                    <p className={cn("text-2xl font-bold tabular-nums", isCurrent ? "text-primary" : "text-foreground")}>
-                      {PLAN_CHAPTER_LIMITS[plan.id]}
-                    </p>
-                    <p className="text-xs text-muted-foreground">chapters</p>
-                  </div>
-
-                  {/* Current badge */}
-                  {isCurrent && (
-                    <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground">
-                      Current
-                    </span>
-                  )}
-                </div>
-              );
-            })}
+          <div className="flex items-center justify-between rounded-xl border border-primary bg-primary/5 px-4 py-4">
+            <div>
+              <p className={cn("text-xl font-bold", PLAN_COLOR[userPlan])}>{userPlan}</p>
+              <p className="text-sm text-muted-foreground">
+                Up to {PLAN_CHAPTER_LIMITS[userPlan]} chapters
+              </p>
+            </div>
+            <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
+              Current
+            </span>
           </div>
-
-          {userPlan !== "Pro" && (
-            <p className="mt-3 text-center text-xs text-muted-foreground">
-              To upgrade your plan, please contact admin.
-            </p>
-          )}
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            To manage your subscription, visit readingbuddy.app
+          </p>
         </CardContent>
       </Card>
 
