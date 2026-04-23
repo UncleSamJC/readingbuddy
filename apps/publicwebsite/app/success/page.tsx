@@ -16,15 +16,15 @@ export default function SuccessPage() {
           reflected automatically. Happy reading!
         </p>
         <a
-          href="https://app.readingbuddy.app"
+          href="https://app.readwithroz.com"
           className="inline-block bg-brand hover:bg-brand-dark text-white rounded-full px-8 py-3 text-sm font-semibold transition-colors"
         >
-          Open ReadingBuddy
+          Open Read With Roz
         </a>
         <p className="mt-4 text-xs text-warm-subtle">
           Questions?{" "}
-          <a href="mailto:hello@readingbuddy.app" className="text-brand hover:underline">
-            hello@readingbuddy.app
+          <a href="mailto:hello@readwithroz.com" className="text-brand hover:underline">
+            hello@readwithroz.com
           </a>
         </p>
       </div>

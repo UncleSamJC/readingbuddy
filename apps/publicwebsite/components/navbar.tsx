@@ -17,7 +17,7 @@ export function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <span className="text-2xl font-bold text-brand tracking-tight">
-            ReadingBuddy
+            Read With Roz
           </span>
         </Link>
 
@@ -33,7 +33,7 @@ export function Navbar() {
             </Link>
           ))}
           <a
-            href="https://app.readingbuddy.app"
+            href="https://app.readwithroz.com"
             className="bg-brand hover:bg-brand-dark text-white rounded-full px-5 py-2 text-sm font-semibold transition-colors"
           >
             Open App
@@ -64,7 +64,7 @@ export function Navbar() {
             </Link>
           ))}
           <a
-            href="https://app.readingbuddy.app"
+            href="https://app.readwithroz.com"
             className="block text-center bg-brand text-white rounded-full px-5 py-2.5 text-sm font-semibold"
           >
             Open App

@@ -56,7 +56,7 @@ const plans = [
       "Vocabulary flashcards",
     ],
     cta: "Get Started",
-    ctaHref: "https://app.readingbuddy.app",
+    ctaHref: "https://app.readwithroz.com",
     ctaStyle: "outline" as const,
   },
   {
@@ -109,13 +109,13 @@ export default function HomePage() {
             Reading Partner
           </h1>
           <p className="text-lg md:text-xl text-warm-subtle max-w-2xl mx-auto mb-10 leading-relaxed">
-            ReadingBuddy helps children aged 6–12 read English books with confidence.
+            Read With Roz helps children aged 6–12 read English books with confidence.
             Teacher Roz guides every session — answering questions, correcting
             pronunciation, and making reading genuinely fun.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="https://app.readingbuddy.app"
+              href="https://app.readwithroz.com"
               className="inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark text-white rounded-full px-8 py-3.5 text-base font-semibold transition-colors"
             >
               Start Free <ArrowRight size={16} />
@@ -255,8 +255,8 @@ export default function HomePage() {
             All paid plans include a{" "}
             <strong className="text-warm-text">7-day free trial</strong>. No credit card required. Cancel anytime.{" "}
             Questions?{" "}
-            <a href="mailto:hello@readingbuddy.app" className="text-brand hover:underline font-medium">
-              hello@readingbuddy.app
+            <a href="mailto:hello@readwithroz.com" className="text-brand hover:underline font-medium">
+              hello@readwithroz.com
             </a>
           </p>
         </div>
@@ -272,7 +272,7 @@ export default function HomePage() {
             Free plan available. No credit card required.
           </p>
           <a
-            href="https://app.readingbuddy.app"
+            href="https://app.readwithroz.com"
             className="inline-flex items-center gap-2 bg-white text-brand hover:bg-warm-muted rounded-full px-8 py-3.5 text-base font-semibold transition-colors"
           >
             Get Started Free <ArrowRight size={16} />
