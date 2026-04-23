@@ -32,8 +32,21 @@ async function start() {
   // Raw body needed for Stripe webhook signature verification
   await app.register(rawBody, { field: "rawBody", global: false, encoding: false, runFirst: true });
 
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "https://app.readwithroz.com",
+    "https://readingbuddy-web.vercel.app",
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+  ];
+
   await app.register(cors, {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        cb(null, true);
+      } else {
+        cb(new Error("Not allowed by CORS"), false);
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   });
 

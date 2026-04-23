@@ -1,10 +1,17 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { buildSystemPrompt } from "@readbuddy/prompts";
+import { buildSystemPromptParts } from "@readbuddy/prompts";
 import { supabase } from "../db/supabase.js";
 
 const client = new Anthropic();
 
 const MAX_HISTORY_TURNS = 10;
+
+// Inline type so we don't depend on SDK internals
+type CacheableTextBlock = {
+  type: "text";
+  text: string;
+  cache_control?: { type: "ephemeral" };
+};
 
 interface ChatInput {
   message: string;
@@ -14,14 +21,17 @@ interface ChatInput {
   language?: string;
 }
 
-async function buildContext(bookId: string, chapterId?: string, language?: string) {
+async function buildSystemBlocks(
+  bookId: string,
+  chapterId?: string,
+  language?: string
+): Promise<CacheableTextBlock[]> {
   const { data: book } = await supabase
     .from("books")
     .select("title, author")
     .eq("id", bookId)
     .single();
 
-  // Only fetch the current chapter if chapterId is provided, otherwise fetch all
   const query = supabase
     .from("chapters")
     .select("id, title, raw_text")
@@ -40,23 +50,31 @@ async function buildContext(bookId: string, chapterId?: string, language?: strin
 
   const chapterTitle = chapters?.[0]?.title ?? "All Chapters";
 
-  return buildSystemPrompt({
+  const { instructions, content } = buildSystemPromptParts({
     bookTitle: book?.title ?? "Unknown",
     chapterTitle,
     bookContent,
     language,
   });
+
+  return [
+    // Block 1: static instructions — not cached (small, ~300 tokens)
+    { type: "text", text: instructions },
+    // Block 2: book content — cached (large, ~20K tokens)
+    // Cache lasts 5 minutes; subsequent requests in the same session pay ~10% cost
+    { type: "text", text: content, cache_control: { type: "ephemeral" } },
+  ];
 }
 
 /** Non-streaming: returns full response text */
 export async function sendChatMessage(input: ChatInput): Promise<string> {
-  const systemPrompt = await buildContext(input.bookId, input.chapterId, input.language);
+  const systemBlocks = await buildSystemBlocks(input.bookId, input.chapterId, input.language);
   const recentHistory = input.history.slice(-MAX_HISTORY_TURNS * 2);
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 256,
-    system: systemPrompt,
+    system: systemBlocks,
     messages: [
       ...recentHistory.map((m) => ({
         role: m.role as "user" | "assistant",
@@ -76,13 +94,13 @@ export async function streamChatMessage(
   onChunk: (text: string) => void,
   onDone: () => void
 ): Promise<void> {
-  const systemPrompt = await buildContext(input.bookId, input.chapterId, input.language);
+  const systemBlocks = await buildSystemBlocks(input.bookId, input.chapterId, input.language);
   const recentHistory = input.history.slice(-MAX_HISTORY_TURNS * 2);
 
   const stream = client.messages.stream({
     model: "claude-sonnet-4-20250514",
     max_tokens: 256,
-    system: systemPrompt,
+    system: systemBlocks,
     messages: [
       ...recentHistory.map((m) => ({
         role: m.role as "user" | "assistant",

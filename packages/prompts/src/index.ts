@@ -6,14 +6,21 @@ interface SystemPromptParams {
   language?: string;
 }
 
-export function buildSystemPrompt(params: SystemPromptParams): string {
+export interface SystemPromptParts {
+  instructions: string;
+  content: string;
+}
+
+/** Returns two separate blocks so the caller can apply cache_control to `content`. */
+export function buildSystemPromptParts(params: SystemPromptParams): SystemPromptParts {
   const { bookTitle, chapterTitle, bookContent, childAge = 8, language = "English" } = params;
 
-  const languageInstruction = language === "English"
-    ? `Always respond in English. Use simple, clear English suitable for a ${childAge}-year-old child.`
-    : `Always respond in ${language}. You may quote English words or phrases from the book as needed, but all explanations and responses must be in ${language}.`;
+  const languageInstruction =
+    language === "English"
+      ? `Always respond in English. Use simple, clear English suitable for a ${childAge}-year-old child.`
+      : `Always respond in ${language}. You may quote English words or phrases from the book as needed, but all explanations and responses must be in ${language}.`;
 
-  return `You are Teacher Roz, an English reading tutor helping a child read "${bookTitle}".
+  const instructions = `You are Teacher Roz, an English reading tutor helping a child read "${bookTitle}".
 
 [Personality]
 - Warm, patient, and encouraging
@@ -35,9 +42,6 @@ Title: ${bookTitle}
 Current Chapter: ${chapterTitle}
 Child's Age: ${childAge}
 
-[Book Content]
-${bookContent}
-
 [What You Can Do]
 - Explain vocabulary and phrases
 - Break down long sentences (explain structure, then meaning)
@@ -50,4 +54,14 @@ ${bookContent}
 - Keep answers short: 3-4 sentences maximum (children have limited attention)
 - No markdown formatting
 - Use numbered lists only when breaking down sentences`;
+
+  const content = `[Book Content]\n${bookContent}`;
+
+  return { instructions, content };
+}
+
+/** Legacy helper — returns a single string (no caching). */
+export function buildSystemPrompt(params: SystemPromptParams): string {
+  const { instructions, content } = buildSystemPromptParts(params);
+  return `${instructions}\n\n${content}`;
 }
