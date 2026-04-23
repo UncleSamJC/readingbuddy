@@ -10,7 +10,8 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "dev:web": "npm -w apps/web run dev",
-    "dev:api": "npm -w apps/api run dev"
+    "dev:api": "npm -w apps/api run dev",
+    "dev:publicwebsite": "npm -w apps/publicwebsite run dev"
   },
   "devDependencies": {
     "turbo": "^2.4.0",

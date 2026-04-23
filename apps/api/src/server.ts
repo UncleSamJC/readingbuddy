@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
+import rawBody from "fastify-raw-body";
 import { authenticate } from "./middleware/auth.js";
 import { authRoutes } from "./routes/auth.js";
 import { chatRoutes } from "./routes/chat.js";
@@ -10,6 +11,7 @@ import { ttsRoutes } from "./routes/tts.js";
 import { assessRoutes } from "./routes/assess.js";
 import { bookRoutes } from "./routes/books.js";
 import { userRoutes } from "./routes/user.js";
+import { stripeRoutes } from "./routes/stripe.js";
 
 // HTTPS support: load SSL certs if paths are provided
 const sslCert = process.env.SSL_CERT_PATH;
@@ -27,6 +29,9 @@ const httpsOptions =
 const app = Fastify({ logger: true, ...httpsOptions });
 
 async function start() {
+  // Raw body needed for Stripe webhook signature verification
+  await app.register(rawBody, { field: "rawBody", global: false, encoding: false, runFirst: true });
+
   await app.register(cors, {
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -40,6 +45,7 @@ async function start() {
   // Public routes (no auth)
   app.get("/api/health", async () => ({ status: "ok" }));
   await app.register(authRoutes, { prefix: "/api/auth" });
+  await app.register(stripeRoutes, { prefix: "/api" });
 
   // Protected routes (require auth)
   await app.register(async (protectedApp) => {
