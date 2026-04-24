@@ -13,3 +13,5 @@ SECURITY DEFINER
 AS $$
   SELECT id FROM auth.users WHERE email = p_email LIMIT 1;
 $$;
+
+----NOTE:  DONE 

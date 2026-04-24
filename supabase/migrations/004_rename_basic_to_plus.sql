@@ -6,3 +6,6 @@ UPDATE user_settings SET plan = 'Plus' WHERE plan = 'Basic';
 ALTER TABLE user_settings
   ADD CONSTRAINT user_settings_plan_check
   CHECK (plan IN ('Free', 'Plus', 'Pro'));
+
+
+--NOTE: DONE 

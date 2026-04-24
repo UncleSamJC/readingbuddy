@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const PRIVACY_URL = "https://readingbuddy-web.vercel.app/privacy";
+const PRIVACY_URL = "https://readwithroz.com/privacy";
 
 type Mode = "login" | "register";
 
@@ -20,25 +20,40 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setIsLoading(true);
 
-    const result = mode === "login"
-      ? await signIn(email, password)
-      : await signUp(email, password);
-
-    setIsLoading(false);
-
-    if (result.error) {
-      setError(result.error);
-      return;
+    if (mode === "login") {
+      const result = await signIn(email, password);
+      setIsLoading(false);
+      if (result.error) {
+        if (result.error.toLowerCase().includes("email not confirmed")) {
+          setError("Please confirm your email first. Check your inbox for the verification link.");
+        } else {
+          setError(result.error);
+        }
+        return;
+      }
+      router.push("/");
+    } else {
+      const result = await signUp(email, password);
+      setIsLoading(false);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      if (result.needsConfirmation) {
+        setSuccess("Verification email sent! Please check your inbox and click the confirmation link.");
+        return;
+      }
+      router.push("/");
     }
-
-    router.push("/");
   }
 
   return (
@@ -101,6 +116,9 @@ export default function LoginPage() {
             {error && (
               <p className="text-sm font-medium text-destructive">{error}</p>
             )}
+            {success && (
+              <p className="text-sm font-medium text-green-600">{success}</p>
+            )}
 
             <Button
               type="submit"
@@ -120,7 +138,7 @@ export default function LoginPage() {
               <>
                 Don&apos;t have an account?{" "}
                 <button
-                  onClick={() => { setMode("register"); setError(null); setAgreedToTerms(false); }}
+                  onClick={() => { setMode("register"); setError(null); setSuccess(null); setAgreedToTerms(false); }}
                   className="font-medium text-primary hover:underline"
                 >
                   Sign up
@@ -130,7 +148,7 @@ export default function LoginPage() {
               <>
                 Already have an account?{" "}
                 <button
-                  onClick={() => { setMode("login"); setError(null); }}
+                  onClick={() => { setMode("login"); setError(null); setSuccess(null); }}
                   className="font-medium text-primary hover:underline"
                 >
                   Sign in

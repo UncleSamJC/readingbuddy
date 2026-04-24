@@ -9,3 +9,6 @@ CREATE TABLE IF NOT EXISTS user_history_audit (
 
 -- No foreign key to auth.users — record must survive after user is deleted
 CREATE INDEX IF NOT EXISTS idx_user_history_audit_deleted_at ON user_history_audit (deleted_at DESC);
+
+
+-----NOTE: DONE
