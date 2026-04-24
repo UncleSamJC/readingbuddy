@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { BookOpen, MessageCircle, Volume2, Star, ArrowRight, Check } from "lucide-react";
-import { SubscribeButton } from "@/components/subscribe-button";
+import { BookOpen, MessageCircle, Volume2, Star, ArrowRight } from "lucide-react";
+import { StripePricingTable } from "@/components/stripe-pricing-table";
 
 const features = [
   {
@@ -43,56 +43,8 @@ const steps = [
   },
 ];
 
-const plans = [
-  {
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    highlight: false,
-    features: [
-      "5 chapters total",
-      "30 AI sessions / month",
-      "Text-to-speech playback",
-      "Vocabulary flashcards",
-    ],
-    cta: "Get Started",
-    ctaHref: "https://app.readwithroz.com",
-    ctaStyle: "outline" as const,
-  },
-  {
-    name: "Plus",
-    price: "$10",
-    period: "/ month",
-    highlight: true,
-    features: [
-      "60 chapters total",
-      "200 AI sessions / month",
-      "Text-to-speech playback",
-      "Vocabulary flashcards",
-      "Pronunciation feedback",
-    ],
-    cta: "Subscribe",
-    ctaHref: "#",
-    ctaStyle: "solid" as const,
-  },
-  {
-    name: "Pro",
-    price: "$15",
-    period: "/ month",
-    highlight: false,
-    features: [
-      "120 chapters total",
-      "Unlimited AI sessions",
-      "Text-to-speech playback",
-      "Vocabulary flashcards",
-      "Pronunciation feedback",
-      "Priority support",
-    ],
-    cta: "Subscribe",
-    ctaHref: "#",
-    ctaStyle: "outline" as const,
-  },
-];
+const STRIPE_PRICING_TABLE_ID = "prctbl_1TPYT3GwNi5YniYOOYsOkMkb";
+const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!;
 
 export default function HomePage() {
   return (
@@ -198,62 +150,12 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 items-stretch">
-            {plans.map((plan) => (
-              <div
-                key={plan.name}
-                className={[
-                  "rounded-2xl p-7 flex flex-col",
-                  plan.highlight
-                    ? "border-2 border-brand shadow-lg shadow-brand/10"
-                    : "border border-warm-border",
-                ].join(" ")}
-              >
-                {plan.highlight && (
-                  <div className="bg-brand text-white text-xs font-semibold rounded-full px-3 py-1 w-fit mb-4">
-                    Most Popular
-                  </div>
-                )}
-                <h3 className="text-lg font-bold text-warm-text mb-1">{plan.name}</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-3xl font-bold text-warm-text">{plan.price}</span>
-                  <span className="text-sm text-warm-subtle">{plan.period}</span>
-                </div>
-                <ul className="space-y-3 flex-1 mb-8">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5 text-sm text-warm-text">
-                      <Check size={15} className="text-brand mt-0.5 shrink-0" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                {plan.name === "Free" ? (
-                  <a
-                    href={plan.ctaHref}
-                    className="block text-center rounded-full py-3 text-sm font-semibold transition-colors border border-warm-border hover:bg-warm-muted text-warm-text"
-                  >
-                    {plan.cta}
-                  </a>
-                ) : (
-                  <SubscribeButton
-                    plan={plan.name as "Plus" | "Pro"}
-                    className={[
-                      "w-full block text-center rounded-full py-3 text-sm font-semibold transition-colors cursor-pointer disabled:opacity-60",
-                      plan.ctaStyle === "solid"
-                        ? "bg-brand hover:bg-brand-dark text-white"
-                        : "border border-warm-border hover:bg-warm-muted text-warm-text",
-                    ].join(" ")}
-                  >
-                    {plan.cta}
-                  </SubscribeButton>
-                )}
-              </div>
-            ))}
-          </div>
+          <StripePricingTable
+            pricingTableId={STRIPE_PRICING_TABLE_ID}
+            publishableKey={STRIPE_PUBLISHABLE_KEY}
+          />
 
           <p className="text-center text-sm text-warm-subtle mt-10">
-            All paid plans include a{" "}
-            <strong className="text-warm-text">7-day free trial</strong>. No credit card required. Cancel anytime.{" "}
             Questions?{" "}
             <a href="mailto:hello@readwithroz.com" className="text-brand hover:underline font-medium">
               hello@readwithroz.com
