@@ -67,7 +67,7 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="https://app.readwithroz.com"
+              href="https://app.readwithroz.com/login?mode=register"
               className="inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark text-white rounded-full px-8 py-3.5 text-base font-semibold transition-colors"
             >
               Start Free <ArrowRight size={16} />
@@ -174,7 +174,7 @@ export default function HomePage() {
             Free plan available. No credit card required.
           </p>
           <a
-            href="https://app.readwithroz.com"
+            href="https://app.readwithroz.com/login?mode=register"
             className="inline-flex items-center gap-2 bg-white text-brand hover:bg-warm-muted rounded-full px-8 py-3.5 text-base font-semibold transition-colors"
           >
             Get Started Free <ArrowRight size={16} />
