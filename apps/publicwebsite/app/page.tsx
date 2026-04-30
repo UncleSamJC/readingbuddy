@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BookOpen, MessageCircle, Volume2, Star, ArrowRight } from "lucide-react";
-import { StripePricingTable } from "@/components/stripe-pricing-table";
+import { PricingCards } from "@/components/pricing-cards";
 
 const features = [
   {
@@ -43,8 +43,6 @@ const steps = [
   },
 ];
 
-const STRIPE_PRICING_TABLE_ID = "prctbl_1TPYT3GwNi5YniYOOYsOkMkb";
-const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!;
 
 export default function HomePage() {
   return (
@@ -150,10 +148,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <StripePricingTable
-            pricingTableId={STRIPE_PRICING_TABLE_ID}
-            publishableKey={STRIPE_PUBLISHABLE_KEY}
-          />
+          <PricingCards />
 
           <p className="text-center text-sm text-warm-subtle mt-10">
             Questions?{" "}

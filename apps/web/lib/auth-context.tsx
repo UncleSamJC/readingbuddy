@@ -43,6 +43,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return { error: error.message };
 
+    // Supabase silently "succeeds" for existing emails but returns empty identities
+    if (data.user && data.user.identities?.length === 0) {
+      return { error: "This email is already registered. Please sign in instead." };
+    }
+
     if (data.user && !data.user.email_confirmed_at) {
       return { needsConfirmation: true };
     }

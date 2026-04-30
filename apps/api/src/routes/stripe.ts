@@ -11,7 +11,6 @@ async function updatePlanByEmail(
   customerId: string,
   subscriptionId: string
 ) {
-  // Use RPC to find user_id by email (auth.users is not directly queryable)
   const { data: userId, error } = await supabase.rpc("get_user_id_by_email", {
     p_email: email,
   });
@@ -19,10 +18,12 @@ async function updatePlanByEmail(
     console.error(`[stripe] User not found for email: ${email}`, error);
     return;
   }
-  await supabase
+  const { error: upsertError } = await supabase
     .from("user_settings")
-    .update({ plan, stripe_customer_id: customerId, stripe_subscription_id: subscriptionId })
-    .eq("user_id", userId);
+    .upsert({ user_id: userId, plan, stripe_customer_id: customerId, stripe_subscription_id: subscriptionId });
+  if (upsertError) {
+    console.error(`[stripe] Failed to upsert user_settings for ${email}:`, upsertError);
+  }
 }
 
 async function downgradePlanByCustomer(customerId: string) {
@@ -56,9 +57,13 @@ export async function stripeRoutes(fastify: FastifyInstance) {
           const subscriptionId = session.subscription as string;
           const plan = session.metadata?.plan;
 
+          console.log(`[stripe] checkout.session.completed — email=${email} plan=${plan} customerId=${customerId}`);
+
           if (email && plan && customerId && subscriptionId) {
             await updatePlanByEmail(email, plan, customerId, subscriptionId);
             console.log(`[stripe] Upgraded ${email} to ${plan}`);
+          } else {
+            console.error(`[stripe] Missing fields — email=${email} plan=${plan} customerId=${customerId} subscriptionId=${subscriptionId}`);
           }
           break;
         }
