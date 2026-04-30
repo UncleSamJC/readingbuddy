@@ -48,17 +48,23 @@ export default function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-warm-muted border-b border-warm-border">
-        <div className="max-w-6xl mx-auto px-6 py-20 md:py-28 text-center">
-          <div className="inline-flex items-center gap-2 bg-brand-light text-brand rounded-full px-4 py-1.5 text-sm font-medium mb-8">
-            Designed for Chinese-American families
+      <section className="relative border-b border-warm-border overflow-hidden">
+        <img
+          src="/hero.jpg"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative max-w-6xl mx-auto px-6 py-20 md:py-28 text-center">
+          <div className="inline-flex items-center gap-2 bg-white/20 text-white rounded-full px-4 py-1.5 text-sm font-medium mb-8 backdrop-blur-sm">
+            Designed for English-Learning families
           </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-6 text-warm-text">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-6 text-white">
             Your Child&apos;s AI
             <br />
             Reading Partner
           </h1>
-          <p className="text-lg md:text-xl text-warm-subtle max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed">
             Read With Roz helps children aged 6–12 read English books with confidence.
             Teacher Roz guides every session — answering questions, correcting
             pronunciation, and making reading genuinely fun.
@@ -72,7 +78,7 @@ export default function HomePage() {
             </a>
             <a
               href="#pricing"
-              className="inline-flex items-center justify-center bg-white hover:bg-warm-muted border border-warm-border text-warm-text rounded-full px-8 py-3.5 text-base font-semibold transition-colors"
+              className="inline-flex items-center justify-center bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/40 text-white rounded-full px-8 py-3.5 text-base font-semibold transition-colors"
             >
               View Pricing
             </a>

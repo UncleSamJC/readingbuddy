@@ -1,8 +1,10 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
 interface AuthContextType {
   user: User | null;
@@ -19,6 +21,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userRef = useRef<User | null>(null);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   useEffect(() => {
     // Get initial session
@@ -37,6 +45,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Idle auto-logout: 30 min of no user activity or audio playback
+  useEffect(() => {
+    const reset = () => {
+      if (!userRef.current) return;
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      idleTimer.current = setTimeout(async () => {
+        if (userRef.current) {
+          await supabase.auth.signOut();
+          localStorage.removeItem("readbuddy-storage");
+        }
+      }, IDLE_TIMEOUT_MS);
+    };
+
+    const userEvents = ["mousemove", "keydown", "click", "touchstart", "scroll"] as const;
+    userEvents.forEach((e) => window.addEventListener(e, reset, { passive: true }));
+    // TTS playback on any Audio element counts as activity
+    document.addEventListener("play", reset, true);
+
+    reset(); // start timer on mount
+
+    return () => {
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      userEvents.forEach((e) => window.removeEventListener(e, reset));
+      document.removeEventListener("play", reset, true);
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {
