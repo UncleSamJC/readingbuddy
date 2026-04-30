@@ -111,9 +111,6 @@ export default function SettingsPage() {
               Current
             </span>
           </div>
-          <p className="mt-3 text-center text-xs text-muted-foreground">
-            To manage your subscription, visit readingbuddy.app
-          </p>
         </CardContent>
       </Card>
 
