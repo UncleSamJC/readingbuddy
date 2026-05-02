@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAppStore, TTS_VOICES, TTS_SPEED_OPTIONS, ROZ_LANGUAGES, type TtsVoiceId, type RozLanguage } from "@/lib/store";
 import { fetchTtsAudio, deleteAccount } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
@@ -36,6 +37,8 @@ export default function SettingsPage() {
   const ttsSpeed = useAppStore((s) => s.ttsSpeed);
   const userPlan = useAppStore((s) => s.userPlan);
   const rozLanguage = useAppStore((s) => s.rozLanguage);
+  const chatUsage = useAppStore((s) => s.chatUsage);
+  const chatLimit = useAppStore((s) => s.chatLimit);
   const setTtsVoice = useAppStore((s) => s.setTtsVoice);
   const setTtsSpeed = useAppStore((s) => s.setTtsSpeed);
   const setRozLanguage = useAppStore((s) => s.setRozLanguage);
@@ -110,6 +113,45 @@ export default function SettingsPage() {
             <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
               Current
             </span>
+          </div>
+
+          {/* Change plan */}
+          <div className="mt-4">
+            <Link
+              href="/settings/plans"
+              className="inline-flex w-full items-center justify-center rounded-lg border border-border bg-muted/50 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
+            >
+              Change Plan
+            </Link>
+          </div>
+
+          {/* AI chat usage */}
+          <div className="mt-4 space-y-1.5">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">AI chat this month</span>
+              <span className={cn(
+                "font-medium",
+                chatUsage >= chatLimit ? "text-destructive" :
+                chatUsage >= chatLimit * 0.8 ? "text-orange-500" : "text-foreground"
+              )}>
+                {chatUsage} / {chatLimit}
+              </span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  chatUsage >= chatLimit ? "bg-destructive" :
+                  chatUsage >= chatLimit * 0.8 ? "bg-orange-500" : "bg-primary"
+                )}
+                style={{ width: `${Math.min((chatUsage / chatLimit) * 100, 100)}%` }}
+              />
+            </div>
+            {chatUsage >= chatLimit && (
+              <p className="text-xs text-destructive">
+                Monthly limit reached. Resets on the 1st of next month.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

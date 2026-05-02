@@ -127,3 +127,9 @@ export const PLAN_LABELS: Record<UserPlan, string> = {
   Plus: "Plus",
   Pro: "Pro",
 };
+
+export const PLAN_CHAT_LIMITS: Record<UserPlan, number> = {
+  Free: 20,
+  Plus: 500,
+  Pro: 1000,
+};

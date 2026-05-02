@@ -43,7 +43,7 @@ supabase/migrations/   — 数据库 schema (5张表: books, chapters, paragraph
 ## 关键设计决策
 
 - MVP 无独立家长端，书本录入在儿童端完成
-- Phase 0 不用 RAG，全书内容直接注入 Claude 上下文（5章约20K tokens）；System Prompt 拆为 instructions + content 两块，content 块启用 cache_control: ephemeral（最小缓存单位1024 tokens，缓存TTL 5分钟，命中后该块仅收10%费用）
+- Phase 0 不用 RAG，全书内容直接注入 Claude 上下文（5章约20K tokens）；System Prompt 拆为 instructions + content 两块，content 块启用 cache_control: ephemeral（最小缓存单位1024 tokens，缓存TTL 5分钟，命中后该块仅收10%费用）--目前已经完成按章节给AI进行上下文注入，节约AI的API调用费用。
 - AI角色"Roz老师"严格限制只讨论书本内容，保障儿童安全
 - TTS 用 OpenAI tts-1（替代原计划的 ElevenLabs，因免费计划API受限）
 - 词汇练习由用户在阅读页手动标记，不自动提取

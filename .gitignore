@@ -9,6 +9,7 @@ dist/
 package-lock.json
 *.txt
 *.CLAUDE.*
+*.md
 
 # Sensitive files
 docs/supabase_info.txt

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import type { ChatMessage } from "@readbuddy/shared-types";
+import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, X } from "lucide-react";
@@ -43,6 +44,12 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const chatUsage = useAppStore((s) => s.chatUsage);
+  const chatLimit = useAppStore((s) => s.chatLimit);
+
+  const remaining = Math.max(chatLimit - chatUsage, 0);
+  const limitReached = chatUsage >= chatLimit;
+  const nearLimit = !limitReached && remaining <= Math.ceil(chatLimit * 0.1);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -52,7 +59,7 @@ export function ChatPanel({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || limitReached) return;
     onSendMessage(input.trim());
     setInput("");
   }
@@ -63,7 +70,7 @@ export function ChatPanel({
       "w-[calc(100vw-2rem)] sm:w-80",
       "h-87.5 sm:h-110"
     )}>
-      {/* Top bar: welcome text + close button */}
+      {/* Top bar */}
       <div className="flex items-center gap-2 px-4 pt-3 pb-1 shrink-0">
         {messages.length === 0 && !isLoading ? (
           <p className="flex-1 text-center text-sm text-muted-foreground">
@@ -101,21 +108,36 @@ export function ChatPanel({
             </span>
           </div>
         )}
+        {limitReached && (
+          <div className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive text-center">
+            Monthly limit reached ({chatLimit} sessions). Resets on the 1st of next month.
+          </div>
+        )}
       </div>
+
+      {/* Usage hint */}
+      {(nearLimit || limitReached) && (
+        <div className={cn(
+          "px-4 py-1 text-center text-xs",
+          limitReached ? "text-destructive" : "text-orange-500"
+        )}>
+          {limitReached ? "No sessions remaining" : `${remaining} session${remaining === 1 ? "" : "s"} left this month`}
+        </div>
+      )}
 
       {/* Input */}
       <form onSubmit={handleSubmit} className="flex gap-2 border-t border-border p-2.5 sm:p-3">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask Roz..."
-          disabled={isLoading}
+          placeholder={limitReached ? "Monthly limit reached" : "Ask Roz..."}
+          disabled={isLoading || limitReached}
           className="flex-1 text-base sm:text-sm"
         />
         <Button
           type="submit"
           size="icon"
-          disabled={isLoading || !input.trim()}
+          disabled={isLoading || !input.trim() || limitReached}
           className="h-10 w-10 shrink-0"
         >
           <Send className="h-4 w-4" />

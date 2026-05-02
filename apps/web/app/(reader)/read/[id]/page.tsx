@@ -52,6 +52,9 @@ export default function ReadPage({
   const toggleMarkedWord = useAppStore((s) => s.toggleMarkedWord);
   const ttsVoice = useAppStore((s) => s.ttsVoice);
   const ttsSpeed = useAppStore((s) => s.ttsSpeed);
+  const chatUsage = useAppStore((s) => s.chatUsage);
+  const chatLimit = useAppStore((s) => s.chatLimit);
+  const setChatUsage = useAppStore((s) => s.setChatUsage);
   const userPlan = useAppStore((s) => s.userPlan);
   const rozLanguage = useAppStore((s) => s.rozLanguage);
 
@@ -201,16 +204,21 @@ export default function ReadPage({
           fullText += chunk;
           updateMessageContent(aiMsgId, fullText);
         },
-        () => {
+        (didSucceed) => {
           setStreamingMessageId(null);
           setIsAiLoading(false);
           cancelStreamRef.current = null;
+          if (didSucceed) setChatUsage(chatUsage + 1);
         },
         chapter?.id,
-        rozLanguage
+        rozLanguage,
+        (used, limit) => {
+          updateMessageContent(aiMsgId, `Monthly limit reached (${used}/${limit} sessions). Resets on the 1st of next month.`);
+          setChatUsage(used);
+        }
       );
     },
-    [addMessage, updateMessageContent, setStreamingMessageId, setIsAiLoading, currentBook?.id, chapter?.id, rozLanguage]
+    [addMessage, updateMessageContent, setStreamingMessageId, setIsAiLoading, currentBook?.id, chapter?.id, rozLanguage, chatUsage, setChatUsage]
   );
 
   // ── TTS (sentence-by-sentence with pre-fetching) ──

@@ -117,9 +117,10 @@ export function streamChat(
   bookId: string,
   history: { role: string; content: string }[],
   onChunk: (text: string) => void,
-  onDone: () => void,
+  onDone: (didSucceed: boolean) => void,
   chapterId?: string,
-  language?: string
+  language?: string,
+  onLimitReached?: (used: number, limit: number) => void
 ): () => void {
   const controller = new AbortController();
 
@@ -133,12 +134,12 @@ export function streamChat(
         signal: controller.signal,
       });
 
-      if (!res.ok) throw new Error(`Chat error ${res.status}`);
       const reader = res.body?.getReader();
-      if (!reader) { onDone(); return; }
+      if (!reader) { onDone(false); return; }
 
       const decoder = new TextDecoder();
       let buffer = "";
+      let succeeded = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -151,19 +152,24 @@ export function streamChat(
         for (const line of lines) {
           if (!line.startsWith("data: ")) continue;
           const data = line.slice(6);
-          if (data === "[DONE]") { onDone(); return; }
+          if (data === "[DONE]") { succeeded = true; onDone(true); return; }
           try {
             const parsed = JSON.parse(data);
             if (parsed.text) onChunk(parsed.text);
+            if (parsed.error === "limit_reached") {
+              onLimitReached?.(parsed.used, parsed.limit);
+              onDone(false);
+              return;
+            }
           } catch {
             // skip malformed
           }
         }
       }
-      onDone();
+      onDone(succeeded);
     } catch (err) {
       if ((err as Error).name !== "AbortError") console.error("Stream error:", err);
-      onDone();
+      onDone(false);
     }
   })();
 

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Book, Chapter, ChatMessage, UserPlan } from "@readbuddy/shared-types";
-import { MAX_WORDS_PER_CHAPTER, PLAN_CHAPTER_LIMITS } from "@readbuddy/shared-types";
+import { MAX_WORDS_PER_CHAPTER, PLAN_CHAPTER_LIMITS, PLAN_CHAT_LIMITS } from "@readbuddy/shared-types";
 import * as api from "./api";
 
 interface BookState {
@@ -93,6 +93,9 @@ interface SettingsState {
   ttsSpeed: number;
   userPlan: UserPlan;
   rozLanguage: RozLanguage;
+  chatUsage: number;
+  chatLimit: number;
+  setChatUsage: (n: number) => void;
   setTtsVoice: (voice: TtsVoiceId) => void;
   setTtsSpeed: (speed: number) => void;
   setRozLanguage: (language: RozLanguage) => void;
@@ -179,11 +182,15 @@ export const useAppStore = create<AppState>()(
           ]);
 
           if (settings) {
+            const s = settings as any;
+            const plan = (s.plan as UserPlan) || "Free";
             set({
-              ttsVoice: (settings.tts_voice || "shimmer") as TtsVoiceId,
-              ttsSpeed: settings.tts_speed || 0.85,
-              userPlan: (settings.plan as UserPlan) || "Free",
-              rozLanguage: (settings.roz_language || "English") as RozLanguage,
+              ttsVoice: (s.tts_voice || "shimmer") as TtsVoiceId,
+              ttsSpeed: s.tts_speed || 0.85,
+              userPlan: plan,
+              rozLanguage: (s.roz_language || "English") as RozLanguage,
+              chatUsage: s.chat_usage ?? 0,
+              chatLimit: s.chat_limit ?? PLAN_CHAT_LIMITS[plan],
             });
           }
 
@@ -426,6 +433,9 @@ export const useAppStore = create<AppState>()(
       ttsSpeed: 0.85,
       userPlan: "Free" as UserPlan,
       rozLanguage: "English" as RozLanguage,
+      chatUsage: 0,
+      chatLimit: PLAN_CHAT_LIMITS.Free,
+      setChatUsage: (n) => set({ chatUsage: n }),
       setTtsVoice: (voice) => {
         set({ ttsVoice: voice });
         api.updateUserSettings({ tts_voice: voice }).catch(() => {});

@@ -1,5 +1,11 @@
 import type { FastifyPluginAsync } from "fastify";
 import { supabase } from "../db/supabase.js";
+import { PLAN_CHAT_LIMITS } from "@readbuddy/shared-types";
+
+function currentYearMonth(): string {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+}
 
 export const userRoutes: FastifyPluginAsync = async (app) => {
   // ── Settings ──
@@ -7,17 +13,23 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
   // GET /api/user/settings
   app.get("/settings", async (request, reply) => {
     const userId = (request as any).userId;
-    const { data, error } = await supabase
-      .from("user_settings")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+    const ym = currentYearMonth();
+
+    const [{ data, error }, { data: usageData }] = await Promise.all([
+      supabase.from("user_settings").select("*").eq("user_id", userId).single(),
+      supabase.from("chat_usage").select("count").eq("user_id", userId).eq("year_month", ym).single(),
+    ]);
 
     if (error || !data) {
-      // Return defaults if no settings yet
-      return reply.send({ tts_voice: "shimmer", tts_speed: 0.85, plan: "Free" });
+      return reply.send({ tts_voice: "shimmer", tts_speed: 0.85, plan: "Free", chat_usage: 0, chat_limit: PLAN_CHAT_LIMITS.Free });
     }
-    return reply.send(data);
+
+    const plan = (data.plan ?? "Free") as keyof typeof PLAN_CHAT_LIMITS;
+    return reply.send({
+      ...data,
+      chat_usage: usageData?.count ?? 0,
+      chat_limit: PLAN_CHAT_LIMITS[plan],
+    });
   });
 
   // PUT /api/user/settings
