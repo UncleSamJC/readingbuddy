@@ -97,9 +97,17 @@ export default function SettingsPage() {
       {/* Plan card */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Crown className="h-5 w-5 text-amber-500" />
-            Your Plan
+          <CardTitle className="flex items-center justify-between text-lg">
+            <div className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-amber-500" />
+              Your Plan
+            </div>
+            <Link
+              href="/settings/plans"
+              className="rounded-full border border-border px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              {userPlan === "Free" ? "Upgrade" : "Change Plan"}
+            </Link>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -113,16 +121,6 @@ export default function SettingsPage() {
             <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
               Current
             </span>
-          </div>
-
-          {/* Change plan */}
-          <div className="mt-4">
-            <Link
-              href="/settings/plans"
-              className="inline-flex w-full items-center justify-center rounded-lg border border-border bg-muted/50 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
-            >
-              Change Plan
-            </Link>
           </div>
 
           {/* AI chat usage */}

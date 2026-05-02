@@ -34,7 +34,7 @@ const PLANS: {
   },
   {
     id: "Plus",
-    price: "$10",
+    price: "$9.99",
     period: "CAD / month",
     tagline: "For regular readers",
     features: [
@@ -48,7 +48,7 @@ const PLANS: {
   },
   {
     id: "Pro",
-    price: "$15",
+    price: "$14.99",
     period: "CAD / month",
     tagline: "For the serious reader",
     features: [

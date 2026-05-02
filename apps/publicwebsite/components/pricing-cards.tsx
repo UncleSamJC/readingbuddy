@@ -21,7 +21,7 @@ const plans = [
   },
   {
     name: "Plus",
-    price: "$10",
+    price: "$9.99",
     period: "CAD / month",
     description: "For regular readers",
     features: [
@@ -37,7 +37,7 @@ const plans = [
   },
   {
     name: "Pro",
-    price: "$15",
+    price: "$14.99",
     period: "CAD / month",
     description: "For the serious reader",
     features: [
